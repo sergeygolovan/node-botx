@@ -108,15 +108,15 @@ export class MentionList extends Array<Mention> {
 
 export class BotAPINestedPersonalMentionData {
     constructor(
-        public user_huid: string,
+        public userHuid: string,
         public name: string,
-        public conn_type: string
+        public connType: string
     ) {}
 }
 
 export class BotAPINestedGroupMentionData {
     constructor(
-        public group_chat_id: string,
+        public groupChatId: string,
         public name: string
     ) {}
 }
@@ -124,3 +124,49 @@ export class BotAPINestedGroupMentionData {
 export type BotAPINestedMentionData =
     | BotAPINestedPersonalMentionData
     | BotAPINestedGroupMentionData;
+
+export class BotAPIMentionData {
+    constructor(
+        public mentionType: string,
+        public mentionId: string,
+        public mentionData?: BotAPINestedMentionData
+    ) {}
+}
+
+export class BotAPIMention {
+    constructor(
+        public type: string,
+        public data: BotAPIMentionData
+    ) {}
+    // Можно добавить методы, если потребуется
+}
+
+// Регулярное выражение для поиска embed-упоминаний
+const EMBED_MENTION_RE = /<embed_mention>(.+?):([0-9a-f\-]*?):(.*?)<\/embed_mention>/g;
+
+// Функция для поиска и замены embed-упоминаний в тексте
+export function findAndReplaceEmbedMentions(body: string): { body: string; mentions: BotAPIMention[] } {
+    const mentions: BotAPIMention[] = [];
+    let newBody = body;
+    let match: RegExpExecArray | null;
+    while ((match = EMBED_MENTION_RE.exec(body)) !== null) {
+        const [embedMention, mentionType, mentionedEntityId, mentionName] = match;
+        // Здесь можно добавить генерацию mention_id и формирование mention_data по типу
+        // Пока что делаем простую заглушку
+        const mention: BotAPIMention = new BotAPIMention(
+            "mention",
+            new BotAPIMentionData(
+                mentionType,
+                mentionedEntityId,
+                mentionType === "user"
+                    ? new BotAPINestedPersonalMentionData(mentionedEntityId, mentionName, "")
+                    : mentionType === "chat" || mentionType === "channel"
+                        ? new BotAPINestedGroupMentionData(mentionedEntityId, mentionName)
+                        : undefined
+            )
+        );
+        newBody = newBody.replace(embedMention, `@{mention:${mentionedEntityId}}`);
+        mentions.push(mention);
+    }
+    return { body: newBody, mentions };
+}

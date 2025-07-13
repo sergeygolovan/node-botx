@@ -1,7 +1,7 @@
 export class BotSender {
   constructor(
-    huid: string, // UUID
-    isChatAdmin?: boolean | null,
-    isChatCreator?: boolean | null
+    public huid: string, // UUID
+    public isChatAdmin?: boolean | null,
+    public isChatCreator?: boolean | null
   ) {}
 }

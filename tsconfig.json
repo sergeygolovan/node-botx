@@ -9,7 +9,26 @@
     "skipLibCheck": true,
     "outDir": "./build",
     "rootDir": "./src",
-    "declaration": true
+    "declaration": true,
+    "baseUrl": "./src",
+    "types": ["node"],
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "paths": {
+      "@client": ["client"],
+      "@client/*": ["client/*"],
+      "@bot": ["bot"],
+      "@bot/*": ["src/bot/*"],
+      "@models": ["models"],
+      "@models/*": ["models/*"],
+      "@constants": ["constants"],
+      "@converters": ["converters"],
+      "@imageValidators": ["imageValidators"],
+      "@logger": ["logger"],
+      "@missing": ["missing"],
+      "@asyncBuffer": ["asyncBuffer"]
+    }
   },
   "include": ["src"],
   "exclude": ["node_modules", "build", "test"]

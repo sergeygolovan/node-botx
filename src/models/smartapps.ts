@@ -1,10 +1,10 @@
-class SmartApp {
+export class SmartApp {
   constructor(
-    public app_id: string,
+    public appId: string,
     public enabled: boolean,
     public id: string,
     public name: string,
     public avatar?: string,
-    public avatar_preview?: string
+    public avatarPreview?: string
   ) {}
 }

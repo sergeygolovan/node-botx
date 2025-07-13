@@ -2,30 +2,30 @@ import { BotAPIEntityTypes } from "../enums";
 
 export class Forward {
   constructor(
-    public message_id: string,
-    public chat_id: string,
-    public sender_huid: string,
-    public sender_name: string
+    public messageId: string,
+    public chatId: string,
+    public senderHuid: string,
+    public senderName: string
   ) {}
 
   toAPI(): BotAPIForward {
     return {
       type: BotAPIEntityTypes.FORWARD,
       data: {
-        message_id: this.message_id,
-        chat_id: this.chat_id,
-        sender_huid: this.sender_huid,
-        sender_name: this.sender_name,
+        messageId: this.messageId,
+        chatId: this.chatId,
+        senderHuid: this.senderHuid,
+        senderName: this.senderName,
       },
     };
   }
 }
 
 export interface BotAPIForwardData {
-  message_id: string;
-  chat_id: string;
-  sender_huid: string;
-  sender_name: string;
+  messageId: string;
+  chatId: string;
+  senderHuid: string;
+  senderName: string;
 }
 
 export interface BotAPIForward {

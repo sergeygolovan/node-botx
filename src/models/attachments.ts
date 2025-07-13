@@ -1,209 +1,264 @@
-import {
-  decode as base64decode,
-  encode as base64encode,
-} from "base64-arraybuffer";
+import { Missing, Undefined } from "@missing";
+import { AsyncBufferReadable } from "@asyncBuffer";
+import { VerifiedPayloadBaseModel, UnverifiedPayloadBaseModel } from "@models";
+import { APIAttachmentTypes, AttachmentTypes, convertAttachmentTypeFromDomain, convertAttachmentTypeToDomain } from "@models";
 import { Readable } from "stream";
-import { AsyncBufferReadable } from "../asyncBuffer";
-import {
-  APIAttachmentTypes,
-  AttachmentTypes,
-  convertAttachmentTypeToDomain,
-} from "./enums";
 import { Sticker } from "./stickers";
+import { lookup } from 'mime-types';
 
-export interface FileAttachmentBase {
-  type: AttachmentTypes;
-  filename: string;
-  size: number;
-  isAsyncFile: false;
-  content: Buffer;
-  open(): Promise<Readable>;
+export abstract class FileAttachmentBase {
+    constructor(
+        public type: AttachmentTypes,
+        public fileId: string,
+        public fileName: string,
+        public fileSize: number,
+        public isAsyncFile: false,
+        public content: Buffer,
+    ) {}
 }
 
-export class AttachmentImage implements FileAttachmentBase {
-  type = AttachmentTypes.IMAGE as const;
-  constructor(
-    public filename: string,
-    public size: number,
-    public content: Buffer,
-    public isAsyncFile = false as const
-  ) {}
-
-  async open(): Promise<Readable> {
-    const stream = Readable.from(this.content);
-    return stream;
-  }
+export class AttachmentImage extends FileAttachmentBase {
+    override readonly type = AttachmentTypes.IMAGE;
+    constructor(
+        fileId: string,
+        public override fileName: string,
+        fileSize: number,
+        isAsyncFile: false,
+        content: Buffer,
+    ) {
+        super(AttachmentTypes.IMAGE, fileId, fileName, fileSize, isAsyncFile, content);
+    }
 }
 
-export class AttachmentVideo implements FileAttachmentBase {
-  type = AttachmentTypes.VIDEO as const;
-  constructor(
-    public filename: string,
-    public size: number,
-    public content: Buffer,
-    public duration: number,
-    public isAsyncFile = false as const
-  ) {}
-
-  async open(): Promise<Readable> {
-    return Readable.from(this.content);
-  }
+export class AttachmentVideo extends FileAttachmentBase {
+    override readonly type = AttachmentTypes.VIDEO;
+    constructor(
+        fileId: string,
+        public override fileName: string,
+        fileSize: number,
+        isAsyncFile: false,
+        content: Buffer,
+        public duration: number,
+    ) {
+        super(AttachmentTypes.VIDEO, fileId, fileName, fileSize, isAsyncFile, content);
+    }
 }
 
-export class AttachmentDocument implements FileAttachmentBase {
-  type = AttachmentTypes.DOCUMENT as const;
-  constructor(
-    public filename: string,
-    public size: number,
-    public content: Buffer,
-    public isAsyncFile = false as const
-  ) {}
-
-  async open(): Promise<Readable> {
-    return Readable.from(this.content);
-  }
+export class AttachmentDocument extends FileAttachmentBase {
+    override readonly type = AttachmentTypes.DOCUMENT;
+    constructor(
+        fileId: string,
+        public override fileName: string,
+        fileSize: number,
+        isAsyncFile: false,
+        content: Buffer,
+    ) {
+        super(AttachmentTypes.DOCUMENT, fileId, fileName, fileSize, isAsyncFile, content);
+    }
 }
 
-export class AttachmentVoice implements FileAttachmentBase {
-  type = AttachmentTypes.VOICE as const;
-  constructor(
-    public filename: string,
-    public size: number,
-    public content: Buffer,
-    public duration: number,
-    public isAsyncFile = false as const
-  ) {}
-
-  async open(): Promise<Readable> {
-    return Readable.from(this.content);
-  }
+export class AttachmentVoice extends FileAttachmentBase {
+    override readonly type = AttachmentTypes.VOICE;
+    constructor(
+        fileId: string,
+        public override fileName: string,
+        fileSize: number,
+        isAsyncFile: false,
+        content: Buffer,
+        public duration: number,
+    ) {
+        super(AttachmentTypes.VOICE, fileId, fileName, fileSize, isAsyncFile, content);
+    }
 }
 
 export class Location {
-  constructor(
-    public name: string,
-    public address: string,
-    public latitude: string,
-    public longitude: string
-  ) {}
+    constructor(
+        public name: string,
+        public address: string,
+        public latitude: string,
+        public longitude: string,
+    ) {}
 }
 
 export class Contact {
-  constructor(public name: string) {}
+    constructor(
+        public name: string,
+    ) {}
 }
 
 export class Link {
-  constructor(
-    public url: string,
-    public title: string,
-    public preview: string,
-    public text: string
-  ) {}
+    constructor(
+        public url: string,
+        public title: string,
+        public preview: string,
+        public text: string,
+    ) {}
 }
 
-export type IncomingFileAttachment =
-  | AttachmentImage
-  | AttachmentVideo
-  | AttachmentDocument
-  | AttachmentVoice;
+export type IncomingFileAttachment = AttachmentImage | AttachmentVideo | AttachmentDocument | AttachmentVoice;
 
 export class OutgoingAttachment {
   public isAsyncFile = false as const;
 
-  constructor(public content: Buffer, public filename: string) {}
+  constructor(public content: Buffer, public fileName: string) {}
 
   static async fromAsyncBuffer(
     asyncBuffer: AsyncBufferReadable,
-    filename: string
+    fileName: string
   ): Promise<OutgoingAttachment> {
     const buffer = Buffer.from(await asyncBuffer.read());
-    return new OutgoingAttachment(buffer, filename);
+    return new OutgoingAttachment(buffer, fileName);
   }
 }
 
-export interface BotAPIAttachmentImageData {
-  content: string;
-  file_name: string;
+export class BotAPIAttachmentImageData extends VerifiedPayloadBaseModel {
+    constructor(
+        public content: string,
+        public file_name: string,
+    ) {
+        super();
+    }
 }
 
-export interface BotAPIAttachmentImage {
-  type: typeof APIAttachmentTypes.IMAGE;
-  data: BotAPIAttachmentImageData;
+export class BotAPIAttachmentImage extends VerifiedPayloadBaseModel {
+    constructor(
+        public type: typeof APIAttachmentTypes.IMAGE,
+        public data: BotAPIAttachmentImageData,
+    ) {
+        super();
+    }
 }
 
-export interface BotAPIAttachmentVideoData {
-  content: string;
-  file_name: string;
-  duration: number;
+export class BotAPIAttachmentVideoData extends VerifiedPayloadBaseModel {
+    constructor(
+        public content: string,
+        public file_name: string,
+        public duration: number,
+    ) {
+        super();
+    }
 }
 
-export interface BotAPIAttachmentVideo {
-  type: typeof APIAttachmentTypes.VIDEO;
-  data: BotAPIAttachmentVideoData;
+export class BotAPIAttachmentVideo extends VerifiedPayloadBaseModel {
+    constructor(
+        public type: typeof APIAttachmentTypes.VIDEO,
+        public data: BotAPIAttachmentVideoData,
+    ) {
+        super();
+    }
 }
 
-export interface BotAPIAttachmentDocumentData {
-  content: string;
-  file_name: string;
+export class BotAPIAttachmentDocumentData extends VerifiedPayloadBaseModel {
+    constructor(
+        public content: string,
+        public file_name: string,
+    ) {
+        super();
+    }
 }
 
-export interface BotAPIAttachmentDocument {
-  type: typeof APIAttachmentTypes.DOCUMENT;
-  data: BotAPIAttachmentDocumentData;
+export class BotAPIAttachmentDocument extends VerifiedPayloadBaseModel {
+    constructor(
+        public type: typeof APIAttachmentTypes.DOCUMENT,
+        public data: BotAPIAttachmentDocumentData,
+    ) {
+        super();
+    }
 }
 
-export interface BotAPIAttachmentVoiceData {
-  content: string;
-  duration: number;
+export class BotAPIAttachmentVoiceData extends VerifiedPayloadBaseModel {
+    constructor(
+        public content: string,
+        public duration: number,
+        public file_name?: string,
+    ) {
+        super();
+    }
 }
 
-export interface BotAPIAttachmentVoice {
-  type: typeof APIAttachmentTypes.VOICE;
-  data: BotAPIAttachmentVoiceData;
+export class BotAPIAttachmentVoice extends VerifiedPayloadBaseModel {
+    constructor(
+        public type: typeof APIAttachmentTypes.VOICE,
+        public data: BotAPIAttachmentVoiceData,
+    ) {
+        super();
+    }
 }
 
-export interface BotAPIAttachmentLocationData {
-  location_name: string;
-  location_address: string;
-  location_lat: string;
-  location_lng: string;
+export class BotAPIAttachmentLocationData extends VerifiedPayloadBaseModel {
+    constructor(
+        public location_name: string,
+        public location_address: string,
+        public location_lat: string,
+        public location_lng: string,
+    ) {
+        super();
+    }
 }
 
-export interface BotAPIAttachmentLocation {
-  type: typeof APIAttachmentTypes.LOCATION;
-  data: BotAPIAttachmentLocationData;
+export class BotAPIAttachmentLocation extends VerifiedPayloadBaseModel {
+    constructor(
+        public type: typeof APIAttachmentTypes.LOCATION,
+        public data: BotAPIAttachmentLocationData,
+    ) {
+        super();
+    }
 }
 
-export interface BotAPIAttachmentContactData {
-  contact_name: string;
+export class BotAPIAttachmentContactData extends VerifiedPayloadBaseModel {
+    constructor(
+        public contact_name: string,
+    ) {
+        super();
+    }
 }
 
-export interface BotAPIAttachmentContact {
-  type: typeof APIAttachmentTypes.CONTACT;
-  data: BotAPIAttachmentContactData;
+export class BotAPIAttachmentContact extends VerifiedPayloadBaseModel {
+    constructor(
+        public type: typeof APIAttachmentTypes.CONTACT,
+        public data: BotAPIAttachmentContactData,
+    ) {
+        super();
+    }
 }
 
-export interface BotAPIAttachmentStickerData {
-  id: string; // UUID
-  link: string;
-  pack: string; // UUID
+export class BotAPIAttachmentStickerData extends VerifiedPayloadBaseModel {
+    constructor(
+        public id: string, // UUID
+        public link: string,
+        public pack: string, // UUID
+    ) {
+        super();
+    }
 }
 
-export interface BotAPIAttachmentSticker {
-  type: typeof APIAttachmentTypes.STICKER;
-  data: BotAPIAttachmentStickerData;
+export class BotAPIAttachmentSticker extends VerifiedPayloadBaseModel {
+    constructor(
+        public type: typeof APIAttachmentTypes.STICKER,
+        public data: BotAPIAttachmentStickerData,
+    ) {
+        super();
+    }
 }
 
-export interface BotAPIAttachmentLinkData {
-  url: string;
-  url_title: string;
-  url_preview: string;
-  url_text: string;
+export class BotAPIAttachmentLinkData extends VerifiedPayloadBaseModel {
+    constructor(
+        public url: string,
+        public url_title: string,
+        public url_preview: string,
+        public url_text: string,
+    ) {
+        super();
+    }
 }
 
-export interface BotAPIAttachmentLink {
-  type: typeof APIAttachmentTypes.LINK;
-  data: BotAPIAttachmentLinkData;
+export class BotAPIAttachmentLink extends VerifiedPayloadBaseModel {
+    constructor(
+        public type: typeof APIAttachmentTypes.LINK,
+        public data: BotAPIAttachmentLinkData,
+    ) {
+        super();
+    }
 }
 
 export type BotAPIAttachment =
@@ -335,123 +390,136 @@ export function convertAPIAttachmentToDomain(
 ): IncomingAttachment {
   const attachmentType = convertAttachmentTypeToDomain(apiAttachment.type);
 
-  switch (attachmentType) {
-    case AttachmentTypes.IMAGE: {
-      const image = apiAttachment as BotAPIAttachmentImage;
-      const content = decodeRFC2397(image.data.content);
-      return new AttachmentImage(
-        image.data.file_name,
-        content.byteLength,
-        Buffer.from(content)
-      );
-    }
-
-    case AttachmentTypes.VIDEO: {
-      const video = apiAttachment as BotAPIAttachmentVideo;
-      const content = decodeRFC2397(video.data.content);
-      return new AttachmentVideo(
-        video.data.file_name,
-        content.byteLength,
-        Buffer.from(content),
-        video.data.duration
-      );
-    }
-
-    case AttachmentTypes.DOCUMENT: {
-      const doc = apiAttachment as BotAPIAttachmentDocument;
-      const content = decodeRFC2397(doc.data.content);
-      return new AttachmentDocument(
-        doc.data.file_name,
-        content.byteLength,
-        Buffer.from(content)
-      );
-    }
-
-    case AttachmentTypes.VOICE: {
-      const voice = apiAttachment as BotAPIAttachmentVoice;
-      const content = decodeRFC2397(voice.data.content);
-      const ext = getAttachmentExtensionFromEncodedContent(voice.data.content);
-      return new AttachmentVoice(
-        `record.${ext}`,
-        content.byteLength,
-        Buffer.from(content),
-        voice.data.duration
-      );
-    }
-
-    case AttachmentTypes.LOCATION: {
-      const loc = apiAttachment as BotAPIAttachmentLocation;
-      return new Location(
-        loc.data.location_name,
-        loc.data.location_address,
-        loc.data.location_lat,
-        loc.data.location_lng
-      );
-    }
-
-    case AttachmentTypes.CONTACT: {
-      const contact = apiAttachment as BotAPIAttachmentContact;
-      return new Contact(contact.data.contact_name);
-    }
-
-    case AttachmentTypes.LINK: {
-      const link = apiAttachment as BotAPIAttachmentLink;
-      return new Link(
-        link.data.url,
-        link.data.url_title,
-        link.data.url_preview,
-        link.data.url_text
-      );
-    }
-
-    case AttachmentTypes.STICKER: {
-      const sticker = apiAttachment as BotAPIAttachmentSticker;
-      return new Sticker(
-        sticker.data.id,
-        sticker.data.link,
-        sticker.data.pack,
-        messageBody
-      );
-    }
-
-    default:
-      throw new Error(`Unsupported attachment type: ${attachmentType}`);
+  if (attachmentType === AttachmentTypes.IMAGE) {
+    const apiImage = apiAttachment as BotAPIAttachmentImage;
+    const content = decodeRFC2397(apiImage.data.content);
+    return new AttachmentImage(
+      "", // fileId is not available in BotAPIAttachment
+      apiImage.data.file_name,
+      content.length,
+      false,
+      Buffer.from(content)
+    );
   }
+
+  if (attachmentType === AttachmentTypes.VIDEO) {
+    const apiVideo = apiAttachment as BotAPIAttachmentVideo;
+    const content = decodeRFC2397(apiVideo.data.content);
+    return new AttachmentVideo(
+      "", // fileId is not available
+      apiVideo.data.file_name,
+      content.length,
+      false,
+      Buffer.from(content),
+      apiVideo.data.duration,
+    );
+  }
+
+  if (attachmentType === AttachmentTypes.DOCUMENT) {
+    const apiDocument = apiAttachment as BotAPIAttachmentDocument;
+    const content = decodeRFC2397(apiDocument.data.content);
+    return new AttachmentDocument(
+      "", // fileId is not available
+      apiDocument.data.file_name,
+      content.length,
+      false,
+      Buffer.from(content)
+    );
+  }
+
+  if (attachmentType === AttachmentTypes.VOICE) {
+    const apiVoice = apiAttachment as BotAPIAttachmentVoice;
+    const content = decodeRFC2397(apiVoice.data.content);
+    const ext = getAttachmentExtensionFromEncodedContent(apiVoice.data.content);
+    return new AttachmentVoice(
+      "", // fileId is not available
+      apiVoice.data.file_name ?? `record.${ext}`,
+      content.length,
+      false,
+      Buffer.from(content),
+      apiVoice.data.duration,
+    );
+  }
+
+  if (attachmentType === AttachmentTypes.LOCATION) {
+    const apiLocation = apiAttachment as BotAPIAttachmentLocation;
+    return new Location(
+      apiLocation.data.location_name,
+      apiLocation.data.location_address,
+      apiLocation.data.location_lat,
+      apiLocation.data.location_lng,
+    );
+  }
+
+  if (attachmentType === AttachmentTypes.CONTACT) {
+    const apiContact = apiAttachment as BotAPIAttachmentContact;
+    return new Contact(apiContact.data.contact_name);
+  }
+
+  if (attachmentType === AttachmentTypes.LINK) {
+    const apiLink = apiAttachment as BotAPIAttachmentLink;
+    return new Link(
+      apiLink.data.url,
+      apiLink.data.url_title,
+      apiLink.data.url_preview,
+      apiLink.data.url_text,
+    );
+  }
+
+  if (attachmentType === AttachmentTypes.STICKER) {
+    const apiSticker = apiAttachment as BotAPIAttachmentSticker;
+    return new Sticker(
+      apiSticker.data.id,
+      apiSticker.data.link,
+      apiSticker.data.pack,
+      messageBody,
+    );
+  }
+
+  throw new Error(`Unsupported attachment type: ${attachmentType}`);
 }
 
 export function getAttachmentExtensionFromEncodedContent(
   encodedContent: string
 ): string {
-  return encodedContent.split(";")[0].split("/")[1];
+  const match = encodedContent.match(/^data:(.*?);/);
+  if (match && match[1]) {
+    const mimeType = match[1];
+    const parts = mimeType.split('/');
+    if (parts.length > 1) {
+      return parts[parts.length - 1];
+    }
+  }
+  return 'bin'; // Default extension
 }
 
-export function decodeRFC2397(encodedContent: string): Uint8Array {
-  if (!encodedContent) return new Uint8Array();
-  const base64Data = encodedContent.split(",", 2)[1];
-  return new Uint8Array(base64decode(base64Data));
+export function decodeRFC2397(encodedContent: string): Buffer {
+  // "data:image/gif;base64,aGVsbG8=" -> <Buffer 68 65 6c 6c 6f>
+  const match = encodedContent.match(/^data:.*?;base64,(.*)$/);
+  if (match && match[1]) {
+    return Buffer.from(match[1], 'base64');
+  }
+  throw new Error("Invalid RFC2397 data URL");
 }
 
-export function encodeRFC2397(content: Uint8Array, mimetype: string): string {
-  return `data:${mimetype};base64,${base64encode(content)}`;
+export function encodeRFC2397(content: Buffer, mimetype: string): string {
+  const base64Content = content.toString('base64');
+  return `data:${mimetype};base64,${base64Content}`;
 }
 
-export class BotXAPIAttachment {
-  file_name: string;
-  data: string;
-
-  constructor(file_name: string, data: string) {
-    this.file_name = file_name;
-    this.data = data;
+export class BotXAPIAttachment extends UnverifiedPayloadBaseModel {
+  constructor(
+    public file_name: string,
+    public data: string
+  ) {
+    super();
   }
 
   static fromFileAttachment(
     attachment: IncomingFileAttachment | OutgoingAttachment
   ): BotXAPIAttachment {
-    const ext = attachment.filename.split(".").pop() ?? "";
-    const mimetype = EXTENSIONS_TO_MIMETYPES[ext] ?? DEFAULT_MIMETYPE;
-    return new BotXAPIAttachment(
-      attachment.filename,
-      encodeRFC2397(attachment.content, mimetype)
-    );
+    const mimetype = lookup(attachment.fileName) || 'application/octet-stream';
+    const data = encodeRFC2397(attachment.content, mimetype);
+    return new BotXAPIAttachment(attachment.fileName, data);
   }
 }

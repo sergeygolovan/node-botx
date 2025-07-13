@@ -1,4 +1,4 @@
-import { Missing, Undefined } from "../missing";
+import { Missing, Undefined } from "@missing";
 import {
     APIAsyncFile,
     convertAsyncFileFromDomain,
@@ -12,12 +12,14 @@ import {
     ChatTypes,
     convertClientPlatformToDomain,
 } from "./enums";
+import { SmartAppEvent } from "./system_events/smartappEvent";
+import { UserDevice, UserSender } from "./message/incomingMessage";
 
 type AnyDict = Record<string, any>;
 
 export class BotAPISyncSmartAppSender {
   constructor(
-    public user_huid: string,
+    public userHuid: string,
     public udid?: string,
     public platform?: BotAPIClientPlatforms | null
   ) {}
@@ -29,16 +31,16 @@ export class BotAPISyncSmartAppPayload {
 
 export class BotAPISyncSmartAppEvent {
   constructor(
-    public bot_id: string,
-    public group_chat_id: string,
-    public sender_info: BotAPISyncSmartAppSender,
+    public botId: string,
+    public groupChatId: string,
+    public senderInfo: BotAPISyncSmartAppSender,
     public method: string,
     public payload: BotAPISyncSmartAppPayload
   ) {}
 
   toDomain(rawSmartappEvent: AnyDict): SmartAppEvent {
-    const platform = this.sender_info.platform
-      ? convertClientPlatformToDomain(this.sender_info.platform)
+    const platform = this.senderInfo.platform
+      ? convertClientPlatformToDomain(this.senderInfo.platform)
       : null;
 
     const device = new UserDevice(
@@ -50,35 +52,32 @@ export class BotAPISyncSmartAppEvent {
       null,
       null,
       null,
+      null,
       null
     );
 
     const sender = new UserSender(
-      this.sender_info.user_huid,
-      this.sender_info.udid,
-      device,
+      this.senderInfo.userHuid,
+      this.senderInfo.udid,
       null,
       null,
       null,
       null,
-      null
+      null,
+      device
     );
 
     return new SmartAppEvent(
-      new BotAccount(this.bot_id, null),
-      new Chat(this.group_chat_id, ChatTypes.PERSONAL_CHAT),
-      sender,
-      {
-        method: this.method,
-        type: "smartapp_rpc",
-        params: this.payload.data,
-      },
-      null,
-      this.bot_id,
-      null,
-      this.payload.files.map(convertAsyncFileToDomain),
-      null,
-      rawSmartappEvent
+      null, // ref
+      this.botId, // smartappId
+      this.payload.data, // data
+      null, // opts
+      null, // smartappApiVersion
+      this.payload.files.map(convertAsyncFileToDomain), // files
+      new Chat(this.groupChatId, ChatTypes.PERSONAL_CHAT), // chat
+      sender, // sender
+      new BotAccount(this.botId, null), // bot
+      rawSmartappEvent // rawCommand
     );
   }
 }
@@ -107,7 +106,7 @@ export class BotAPISyncSmartAppEventErrorResponse {
   constructor(
     public reason: string,
     public errors: any[],
-    public errorData: Record<string, any>
+    public error_data: Record<string, any>
   ) {}
 
   static fromDomain(

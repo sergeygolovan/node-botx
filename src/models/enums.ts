@@ -186,7 +186,7 @@ export function convertMentionTypeFromDomain(
   }
 }
 
-export function convertUserKindToDomain(userKind: APIUserKinds): UserKinds {
+export function convertUserKindToDomain(userKind: APIUserKinds | string): UserKinds {
   switch (userKind) {
     case APIUserKinds.USER:
       return UserKinds.RTS_USER;
@@ -268,7 +268,7 @@ export function convertAttachmentTypeFromDomain(
   }
 }
 
-export function convertChatTypeFromdomain(
+export function convertChatTypeFromDomain(
   chatType: ChatTypes
 ): APIChatTypes {
   switch (chatType) {

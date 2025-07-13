@@ -1,71 +1,71 @@
 import type {
-    BotAPIIncomingMessage,
     IncomingMessage,
-} from "./message/incoming_message";
+    BotAPIIncomingMessage,
+} from "./message/incomingMessage";
 
 import type {
     AddedToChatEvent,
     BotAPIAddedToChat,
-} from "./system_events/added_to_chat";
+} from "./system_events/addedToChat";
 
 import type {
     BotAPIChatCreated,
     ChatCreatedEvent,
-} from "./system_events/chat_created";
+} from "./system_events/chatCreated";
 
 import type {
     BotAPIChatDeletedByUser,
     ChatDeletedByUserEvent,
-} from "./system_events/chat_deleted_by_user";
+} from "./system_events/chatDeletedByUser";
 
 import type {
     BotAPIConferenceChanged,
     ConferenceChangedEvent,
-} from "./system_events/conference_changed";
+} from "./system_events/conferenceChanged";
 
 import type {
     BotAPIConferenceCreated,
     ConferenceCreatedEvent,
-} from "./system_events/conference_created";
+} from "./system_events/conferenceCreated";
 
 import type {
     BotAPIConferenceDeleted,
     ConferenceDeletedEvent,
-} from "./system_events/conference_deleted";
+} from "./system_events/conferenceDeleted";
 
-import type { BotAPICTSLogin, CTSLoginEvent } from "./system_events/cts_login";
+import type { BotAPICTSLogin, CTSLoginEvent } from "./system_events/ctsLogin";
 
 import type {
     BotAPICTSLogout,
     CTSLogoutEvent,
-} from "./system_events/cts_logout";
+} from "./system_events/ctsLogout";
 
 import type {
     BotAPIDeletedFromChat,
     DeletedFromChatEvent,
-} from "./system_events/deleted_from_chat";
+} from "./system_events/deletedFromChat";
 
-import type { BotAPIEventEdit, EventEdit } from "./system_events/event_edit";
+import type { BotAPIEventEdit, EventEdit } from "./system_events/eventEdit";
 
 import type {
     BotAPIInternalBotNotification,
     InternalBotNotificationEvent,
-} from "./system_events/internal_bot_notification";
+} from "./system_events/internalBotNotification";
 
 import type {
     BotAPILeftFromChat,
     LeftFromChatEvent,
-} from "./system_events/left_from_chat";
+} from "./system_events/leftFromChat";
 
 import type {
     BotAPISmartAppEvent,
     SmartAppEvent,
-} from "./system_events/smartapp_event";
+} from "./system_events/smartappEvent";
 
 import type {
     BotAPIJoinToChat,
     JoinToChatEvent,
-} from "./system_events/user_joined_to_chat";
+} from "./system_events/userJoinedToChat";
 
 // Типы для системных событий (BotAPI)
 export type BotAPISystemEvent =

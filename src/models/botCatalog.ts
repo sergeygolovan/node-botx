@@ -1,9 +1,9 @@
 export class BotsListItem {
   constructor(
-    id: string, // UUID
-    name: string,
-    description: string,
-    avatar: string | null,
-    enabled: boolean
+    public id: string, // UUID
+    public name: string,
+    public description: string,
+    public avatar: string | null,
+    public enabled: boolean
   ) {}
 }

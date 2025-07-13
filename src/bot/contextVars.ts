@@ -1,13 +1,13 @@
 import { AsyncLocalStorage } from "async_hooks";
 import { UUID } from "crypto"; // Или используйте string, если UUID — это строка
 
-import type { Bot } from "./bot"; // путь к определению Bot
+import type { Bot } from "./bot.ts"; // путь к определению Bot
 
 // Типы
 interface ContextData {
-  bot: Bot;
-  botId: UUID | string;
-  chatId: UUID | string;
+  bot?: Bot;
+  botId?: UUID | string;
+  chatId?: UUID | string;
 }
 
 // Глобальное хранилище контекста

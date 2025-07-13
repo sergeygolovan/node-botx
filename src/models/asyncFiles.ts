@@ -1,15 +1,7 @@
-import ScratchPad from "file-scratch-pad";
 import { Readable } from "stream";
-
-import { botIdVar, botVar, chatIdVar } from "../bot/contextVars"; // аналоги contextvars
-import { CHUNK_SIZE } from "../constants";
-import { VerifiedPayloadBaseModel } from "./apiBase";
-import {
-  APIAttachmentTypes,
-  AttachmentTypes,
-  convertAttachmentTypeFromDomain,
-  convertAttachmentTypeToDomain,
-} from "./enums";
+import { SpooledAsyncBuffer, CHUNK_SIZE } from "@asyncBuffer";
+import { botIdVar, botVar, chatIdVar } from "@bot";
+import { VerifiedPayloadBaseModel, APIAttachmentTypes, AttachmentTypes, convertAttachmentTypeFromDomain, convertAttachmentTypeToDomain } from "@models";
 
 type AsyncGenerator<T> = AsyncIterableIterator<T>;
 
@@ -41,29 +33,51 @@ export abstract class AsyncFileBase {
   }
 
   /**
-   * Открывает файл и возвращает Readable поток из ScratchPad.
-   * ScratchPad используется вместо SpooledTemporaryFile.
+   * Открывает файл и возвращает Readable поток из SpooledAsyncBuffer.
+   * SpooledAsyncBuffer используется вместо SpooledTemporaryFile.
    */
   async *open(): AsyncGenerator<Readable> {
     const bot = botVar.get();
 
-    // Создаём временный буфер с ограничением размера, аналог CHUNK_SIZE
-    const scratchPad = await ScratchPad.create({ maxSize: CHUNK_SIZE });
+    // Создаём спулинговый буфер с ограничением размера, аналог CHUNK_SIZE
+    // Используем SpooledAsyncBuffer как в Python оригинале для оптимизации памяти
+    const spooledBuffer = new SpooledAsyncBuffer(CHUNK_SIZE);
 
     try {
-      // Скачиваем файл в scratchPad (нужно, чтобы bot.downloadFile умел писать в scratchPad)
-      await bot.downloadFile({
-        botId: botIdVar.get(),
-        chatId: chatIdVar.get(),
-        fileId: this._fileId,
-        asyncBuffer: scratchPad,
-      });
+      // Скачиваем файл в spooledBuffer (как в Python оригинале)
+      if (!bot) {
+        throw new Error("Bot not found in context");
+      }
+      await bot.downloadFileToBuffer(
+        botIdVar.get() || "",
+        chatIdVar.get() || "",
+        this._fileId,
+        spooledBuffer
+      );
 
-      // Возвращаем Readable поток из scratchPad
-      yield scratchPad.stream();
+      // Перемещаемся в начало буфера для чтения
+      await spooledBuffer.seek(0);
+
+      // Создаём Readable поток, который читает данные чанками из буфера
+      const readable = new Readable({
+        async read(size) {
+          try {
+            const chunk = await spooledBuffer.read(size);
+            if (chunk.length === 0) {
+              this.push(null); // Сигнал конца потока
+            } else {
+              this.push(chunk);
+            }
+          } catch (error) {
+            this.destroy(error as Error);
+          }
+        }
+      });
+      
+      yield readable;
     } finally {
       // Очистка ресурсов
-      await scratchPad.close();
+      await spooledBuffer.close();
     }
   }
 }
@@ -115,11 +129,11 @@ export class Voice extends AsyncFileBase {
 export abstract class APIAsyncFileBase extends VerifiedPayloadBaseModel {
   type!: APIAttachmentTypes;
   file!: string;
-  fileMimeType!: string;
-  fileId!: string;
-  fileName!: string;
-  fileSize!: number;
-  fileHash!: string;
+  file_mime_type!: string;
+  file_id!: string;
+  file_name!: string;
+  file_size!: number;
+  file_hash!: string;
 }
 
 export class ApiAsyncFileImage extends APIAsyncFileBase {
@@ -156,50 +170,50 @@ export function convertAsyncFileFromDomain(file: File): APIAsyncFile {
       const img = file as Image;
       return {
         type: attachmentType,
-        fileName: img.filename,
-        fileSize: img.size,
-        fileId: img._fileId,
+        file_name: img.filename,
+        file_size: img.size,
+        file_id: img._fileId,
         file: img._fileUrl,
-        fileMimeType: img._fileMimeType,
-        fileHash: img._fileHash,
+        file_mime_type: img._fileMimeType,
+        file_hash: img._fileHash,
       } as ApiAsyncFileImage;
 
     case APIAttachmentTypes.VIDEO:
       const vid = file as Video;
       return {
         type: attachmentType,
-        fileName: vid.filename,
-        fileSize: vid.size,
+        file_name: vid.filename,
+        file_size: vid.size,
         duration: vid.duration,
-        fileId: vid._fileId,
+        file_id: vid._fileId,
         file: vid._fileUrl,
-        fileMimeType: vid._fileMimeType,
-        fileHash: vid._fileHash,
+        file_mime_type: vid._fileMimeType,
+        file_hash: vid._fileHash,
       } as ApiAsyncFileVideo;
 
     case APIAttachmentTypes.DOCUMENT:
       const doc = file as Document;
       return {
         type: attachmentType,
-        fileName: doc.filename,
-        fileSize: doc.size,
-        fileId: doc._fileId,
+        file_name: doc.filename,
+        file_size: doc.size,
+        file_id: doc._fileId,
         file: doc._fileUrl,
-        fileMimeType: doc._fileMimeType,
-        fileHash: doc._fileHash,
+        file_mime_type: doc._fileMimeType,
+        file_hash: doc._fileHash,
       } as ApiAsyncFileDocument;
 
     case APIAttachmentTypes.VOICE:
       const voice = file as Voice;
       return {
         type: attachmentType,
-        fileName: voice.filename,
-        fileSize: voice.size,
+        file_name: voice.filename,
+        file_size: voice.size,
         duration: voice.duration,
-        fileId: voice._fileId,
+        file_id: voice._fileId,
         file: voice._fileUrl,
-        fileMimeType: voice._fileMimeType,
-        fileHash: voice._fileHash,
+        file_mime_type: voice._fileMimeType,
+        file_hash: voice._fileHash,
       } as ApiAsyncFileVoice;
 
     default:
@@ -214,46 +228,46 @@ export function convertAsyncFileToDomain(asyncFile: APIAsyncFile): File {
     case AttachmentTypes.IMAGE:
       const img = asyncFile as ApiAsyncFileImage;
       return new Image(
-        img.fileName,
-        img.fileSize,
-        img.fileId,
+        img.file_name,
+        img.file_size,
+        img.file_id,
         img.file,
-        img.fileMimeType,
-        img.fileHash
+        img.file_mime_type,
+        img.file_hash
       );
 
     case AttachmentTypes.VIDEO:
       const vid = asyncFile as ApiAsyncFileVideo;
       return new Video(
-        vid.fileName,
-        vid.fileSize,
-        vid.fileId,
+        vid.file_name,
+        vid.file_size,
+        vid.file_id,
         vid.file,
-        vid.fileMimeType,
-        vid.fileHash,
+        vid.file_mime_type,
+        vid.file_hash,
         vid.duration
       );
 
     case AttachmentTypes.DOCUMENT:
       const doc = asyncFile as ApiAsyncFileDocument;
       return new Document(
-        doc.fileName,
-        doc.fileSize,
-        doc.fileId,
+        doc.file_name,
+        doc.file_size,
+        doc.file_id,
         doc.file,
-        doc.fileMimeType,
-        doc.fileHash
+        doc.file_mime_type,
+        doc.file_hash
       );
 
     case AttachmentTypes.VOICE:
       const voice = asyncFile as ApiAsyncFileVoice;
       return new Voice(
-        voice.fileName,
-        voice.fileSize,
-        voice.fileId,
+        voice.file_name,
+        voice.file_size,
+        voice.file_id,
         voice.file,
-        voice.fileMimeType,
-        voice.fileHash,
+        voice.file_mime_type,
+        voice.file_hash,
         voice.duration
       );
 

@@ -1,9 +1,9 @@
-import { AsyncBufferWritable } from "../asyncBuffer";
-import { botVar } from "../bot/contextVars";
+import { AsyncBufferWritable } from "@asyncBuffer";
+import { botVar } from "@bot";
 
 export class Sticker {
   constructor(
-    public id: string, // UUID в строковом виде
+    public id: string, // UUID
     public emoji: string,
     public imageLink: string,
     public packId: string // UUID
@@ -11,6 +11,9 @@ export class Sticker {
 
   async download(asyncBuffer: AsyncBufferWritable): Promise<void> {
     const bot = botVar.get();
+    if (!bot || !bot.httpClient) {
+      throw new Error("Bot or HTTP client not found in context");
+    }
     const response = await bot.httpClient.get<ArrayBuffer>(this.imageLink, {
       responseType: "arraybuffer",
     });

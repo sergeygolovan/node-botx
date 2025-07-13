@@ -1,21 +1,21 @@
-class BotAPIMethodSuccessfulCallback {
+export class BotAPIMethodSuccessfulCallback {
   constructor(
-    public sync_id: string,
+    public syncId: string,
     public status: "ok",
     public result: Record<string, any>
   ) {}
 }
 
-class BotAPIMethodFailedCallback {
+export class BotAPIMethodFailedCallback {
   constructor(
-    public sync_id: string,
+    public syncId: string,
     public status: "error",
     public reason: string,
     public errors: string[],
-    public error_data: Record<string, any>
+    public errorData: Record<string, any>
   ) {}
 }
 
-type BotXMethodCallback =
+export type BotXMethodCallback =
   | BotAPIMethodSuccessfulCallback
   | BotAPIMethodFailedCallback;

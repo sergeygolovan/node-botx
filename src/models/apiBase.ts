@@ -49,32 +49,65 @@ function removeUndefined(originObj: any): any {
 export abstract class PayloadBaseModel {
   abstract toObject(): Record<string, any>;
 
-  toJSON(): string {
+  // Аналог Python json() метода
+  json(): string {
     const cleanObj = removeUndefined(this.toObject());
-    return JSON.stringify(cleanObj);
+    return JSON.stringify(cleanObj, null, 0);
   }
 
+  // Аналог Python jsonable_dict() метода
   jsonableDict(): Record<string, any> {
-    return JSON.parse(this.toJSON());
+    return JSON.parse(this.json());
+  }
+
+  // Для обратной совместимости
+  toJSON(): string {
+    return this.json();
   }
 }
 
 export class VerifiedPayloadBaseModel extends PayloadBaseModel {
-  // This can be extended with validation logic if needed
+  constructor(data: Record<string, any> = {}, fieldsSet?: Set<string>) {
+    super();
+    // Копируем все поля из data в this, как в Python версии
+    Object.assign(this, data);
+  }
+
   toObject(): Record<string, any> {
-    throw new Error("Method not implemented.");
+    const result: Record<string, any> = {};
+    for (const [key, value] of Object.entries(this)) {
+      // Исключаем служебные поля
+      if (key !== 'constructor' && typeof value !== 'function' && !key.startsWith('_')) {
+        result[key] = value;
+      }
+    }
+    return result;
   }
 }
 
 export class UnverifiedPayloadBaseModel extends PayloadBaseModel {
-  private data: Record<string, any>;
+  private _fieldsSet?: Set<string>;
 
-  constructor(data: Record<string, any>, fieldsSet?: Set<string>) {
+  constructor(data: Record<string, any> = {}, fieldsSet?: Set<string>) {
     super();
-    this.data = data;
+    // Копируем все поля из data в this, как в Python версии
+    Object.assign(this, data);
+    this._fieldsSet = fieldsSet;
   }
 
   toObject(): Record<string, any> {
-    return this.data;
+    const result: Record<string, any> = {};
+    for (const [key, value] of Object.entries(this)) {
+      // Исключаем служебные поля
+      if (key !== 'constructor' && typeof value !== 'function' && !key.startsWith('_')) {
+        result[key] = value;
+      }
+    }
+    return result;
+  }
+
+  // Аналог Python fields_set
+  get fieldsSet(): Set<string> | undefined {
+    return this._fieldsSet;
   }
 }

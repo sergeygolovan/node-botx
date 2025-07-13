@@ -10,14 +10,26 @@ export class Reply {
   ) {}
 }
 
-export interface BotAPIReplyData {
-  message_id: string;
-  sender_huid: string;
-  sender_name: string;
-  body: string;
+// Импортируем типы из mentions.ts
+import { 
+  BotAPINestedPersonalMentionData, 
+  BotAPINestedGroupMentionData, 
+  BotAPINestedMentionData, 
+  BotAPIMentionData 
+} from "./mentions";
+
+export class BotAPIReplyData {
+  constructor(
+    public sourceSyncId: string,
+    public sender: string,
+    public body: string,
+    public mentions: BotAPIMentionData[]
+  ) {}
 }
 
-export interface BotAPIReply {
-  type: BotAPIEntityTypes.REPLY;
-  data: BotAPIReplyData;
+export class BotAPIReply {
+  constructor(
+    public type: BotAPIEntityTypes.REPLY,
+    public data: BotAPIReplyData
+  ) {}
 }

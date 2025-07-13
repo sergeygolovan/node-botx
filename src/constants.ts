@@ -1,3 +1,4 @@
+// Константы для работы с файлами и API
 export const CHUNK_SIZE = 1024 * 1024; // 1Mb
 export const BOT_API_VERSION = 4;
 export const SMARTAPP_API_VERSION = 1;

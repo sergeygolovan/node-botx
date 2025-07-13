@@ -9,10 +9,12 @@
     "test": "jest"
   },
   "dependencies": {
+    "@types/jsonwebtoken": "^9.0.10",
     "axios": "^1.6.0",
     "base64-arraybuffer": "^1.0.2",
-    "file-scratch-pad": "^1.0.2",
+    "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
+    "mime-types": "^3.0.1",
     "uuid": "^9.0.1",
     "winston": "^3.17.0",
     "zod": "^3.25.56"
@@ -20,6 +22,8 @@
   "devDependencies": {
     "@types/jest": "^29.5.0",
     "@types/lodash": "^4.17.17",
+    "@types/mime-types": "^3.0.1",
+    "@types/node": "^24.0.13",
     "@types/uuid": "^10.0.0",
     "jest": "^29.0.0",
     "ts-node": "^10.9.1",

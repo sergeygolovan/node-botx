@@ -1,24 +1,25 @@
 import { APIChatTypes, convertChatTypeToDomain, IncomingChatTypes } from "./enums";
+import { IncomingMessage } from "./message/incomingMessage";
 
 export type BotMenu = Record<string, string>;
 
 export class StatusRecipient {
   constructor(
-    public bot_id: string,
+    public botId: string,
     public huid: string,
-    public ad_login: string | null,
-    public ad_domain: string | null,
-    public is_admin: boolean | null,
-    public chat_type: IncomingChatTypes,
+    public adLogin: string | null,
+    public adDomain: string | null,
+    public isAdmin: boolean | null,
+    public chatType: IncomingChatTypes,
   ) {}
 
   static fromIncomingMessage(incomingMessage: IncomingMessage): StatusRecipient {
     return new StatusRecipient(
       incomingMessage.bot.id,
       incomingMessage.sender.huid,
-      incomingMessage.sender.ad_login ?? null,
-      incomingMessage.sender.ad_domain ?? null,
-      incomingMessage.sender.is_chat_admin ?? null,
+      incomingMessage.sender.adLogin ?? null,
+      incomingMessage.sender.adDomain ?? null,
+      incomingMessage.sender.isChatAdmin ?? null,
       incomingMessage.chat.type,
     );
   }
@@ -26,12 +27,12 @@ export class StatusRecipient {
 
 export class BotAPIStatusRecipient {
   constructor(
-    public bot_id: string,
-    public user_huid: string,
-    public ad_login: string | null,
-    public ad_domain: string | null,
-    public is_admin: boolean | null,
-    public chat_type: APIChatTypes | string,
+    public botId: string,
+    public userHuid: string,
+    public adLogin: string | null,
+    public adDomain: string | null,
+    public isAdmin: boolean | null,
+    public chatType: APIChatTypes | string,
   ) {}
 
   // Замена пустых строк на null (эмулирует валидатор)
@@ -40,31 +41,31 @@ export class BotAPIStatusRecipient {
   }
 
   static fromRaw(data: {
-    bot_id: string;
-    user_huid: string;
-    ad_login?: string | null;
-    ad_domain?: string | null;
-    is_admin?: boolean | null;
-    chat_type: APIChatTypes | string;
+    botId: string;
+    userHuid: string;
+    adLogin?: string | null;
+    adDomain?: string | null;
+    isAdmin?: boolean | null;
+    chatType: APIChatTypes | string;
   }): BotAPIStatusRecipient {
     return new BotAPIStatusRecipient(
-      data.bot_id,
-      data.user_huid,
-      this.normalizeField(data.ad_login ?? null),
-      this.normalizeField(data.ad_domain ?? null),
-      this.normalizeField(data.is_admin ?? null),
-      data.chat_type,
+      data.botId,
+      data.userHuid,
+      this.normalizeField(data.adLogin ?? null),
+      this.normalizeField(data.adDomain ?? null),
+      this.normalizeField(data.isAdmin ?? null),
+      data.chatType,
     );
   }
 
   toDomain(): StatusRecipient {
     return new StatusRecipient(
-      this.bot_id,
-      this.user_huid,
-      this.ad_login,
-      this.ad_domain,
-      this.is_admin,
-      convertChatTypeToDomain(this.chat_type),
+      this.botId,
+      this.userHuid,
+      this.adLogin,
+      this.adDomain,
+      this.isAdmin,
+      convertChatTypeToDomain(this.chatType),
     );
   }
 }
@@ -83,7 +84,7 @@ export class BotAPIStatusResult {
   constructor(
     public commands: BotAPIBotMenu,
     public enabled: true = true,
-    public status_message?: string,
+    public statusMessage?: string,
   ) {}
 }
 
@@ -96,12 +97,24 @@ export class BotAPIStatus {
 
 export function buildBotStatusResponse(botMenu: BotMenu): object {
   const commands = Object.entries(botMenu).map(
-    ([command, description]) => new BotAPIBotMenuItem(description, command, command),
+    ([command, description]) => new BotAPIBotMenuItem(command, command, description),
   );
 
   const status = new BotAPIStatus(
     new BotAPIStatusResult(commands, true, "Bot is working"),
   );
 
-  return JSON.parse(JSON.stringify(status));
+  // Эмулируем asdict из Python, преобразуя объект в plain object
+  return {
+    status: status.status,
+    result: {
+      commands: status.result.commands.map(item => ({
+        description: item.description,
+        body: item.body,
+        name: item.name,
+      })),
+      enabled: status.result.enabled,
+      status_message: status.result.statusMessage,
+    }
+  };
 }
