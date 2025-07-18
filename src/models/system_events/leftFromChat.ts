@@ -1,44 +1,43 @@
-import { BotAPISystemEventTypes, IncomingChatTypes, BotAccount, Chat } from "@models";
+import { BotAccount, Chat, BotAPISystemEventTypes, convertChatTypeToDomain } from "@models";
 
 export class LeftFromChatEvent {
   constructor(
     public bot: BotAccount,
-    public rawCommand: Record<string, unknown>,
-    public huids: string[], // UUID[] как string[]
+    public rawCommand: Record<string, any>,
+    public huids: string[],
     public chat: Chat
   ) {}
 }
 
-export interface BotAPILeftFromChatData {
-  leftMembers: string[]; // UUID[] как string[]
+export class BotAPILeftFromChatData {
+  constructor(
+    public left_members: string[]
+  ) {}
 }
 
-export interface BotAPILeftFromChatPayload {
-  body: BotAPISystemEventTypes.LEFT_FROM_CHAT;
-  data: BotAPILeftFromChatData;
+export class BotAPILeftFromChatPayload {
+  constructor(
+    public body: BotAPISystemEventTypes,
+    public data: BotAPILeftFromChatData
+  ) {}
 }
 
-export interface BotAPILeftFromChat {
-  botId: string;
-  command: BotAPILeftFromChatPayload;
-  from: {
-    host: string;
-    groupChatId: string;
-    chatType: string;
-  };
-}
+export class BotAPILeftFromChat {
+  constructor(
+    public bot_id: string,
+    public payload: BotAPILeftFromChatPayload,
+    public sender: { group_chat_id: string; chat_type: string; host?: string }
+  ) {}
 
-export function toDomainLeftFromChat(
-  api: BotAPILeftFromChat,
-  rawCommand: Record<string, unknown>
-): LeftFromChatEvent {
-  return new LeftFromChatEvent(
-    new BotAccount(api.botId, api.from.host),
-    rawCommand,
-    api.command.data.leftMembers,
-    new Chat(
-      api.from.groupChatId,
-      api.from.chatType as IncomingChatTypes
-    )
-  );
+  toDomain(rawCommand: Record<string, any>): LeftFromChatEvent {
+    return new LeftFromChatEvent(
+      new BotAccount(this.bot_id, this.sender.host),
+      rawCommand,
+      this.payload.data.left_members,
+      new Chat(
+        this.sender.group_chat_id,
+        convertChatTypeToDomain(this.sender.chat_type)
+      )
+    );
+  }
 } 

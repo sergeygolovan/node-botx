@@ -1,26 +1,46 @@
-import { AuthorizedBotXMethod } from "../../authorizedBotxMethod";
-import { HttpClient } from "../../httpClient";
-import { BotAccountsStorage } from "../../../bot/botAccountsStorage";
+import { AuthorizedBotXMethod, HttpClient } from "@client";
+import { BotAccountsStorage } from "@bot";
+import { UnverifiedPayloadBaseModel, VerifiedPayloadBaseModel } from "@models";
+import { Missing } from "@missing";
 
-export interface BotXAPISmartAppCustomNotificationNestedPayload {
-  title: string;
-  body: string;
+export class BotXAPISmartAppCustomNotificationNestedPayload extends UnverifiedPayloadBaseModel {
+  title!: string;
+  body!: string;
 }
 
-export interface BotXAPISmartAppCustomNotificationRequestPayload {
-  group_chat_id: string;
-  payload: BotXAPISmartAppCustomNotificationNestedPayload;
-  meta?: Record<string, any>;
+export class BotXAPISmartAppCustomNotificationRequestPayload extends UnverifiedPayloadBaseModel {
+  group_chat_id!: string;
+  payload!: BotXAPISmartAppCustomNotificationNestedPayload;
+  meta!: Missing<Record<string, any>>;
+
+  static fromDomain(
+    group_chat_id: string,
+    title: string,
+    body: string,
+    meta: Missing<Record<string, any>>
+  ): BotXAPISmartAppCustomNotificationRequestPayload {
+    return new BotXAPISmartAppCustomNotificationRequestPayload({
+      group_chat_id,
+      payload: new BotXAPISmartAppCustomNotificationNestedPayload({
+        title,
+        body,
+      }),
+      meta,
+    });
+  }
 }
 
-export interface BotXAPISyncIdResult {
-  sync_id: string;
+export class BotXAPISyncIdResult extends VerifiedPayloadBaseModel {
+  sync_id!: string;
 }
 
-export interface BotXAPISmartAppCustomNotificationResponsePayload {
-  status: "ok";
-  result: BotXAPISyncIdResult;
-  toDomain(): string;
+export class BotXAPISmartAppCustomNotificationResponsePayload extends VerifiedPayloadBaseModel {
+  status!: "ok";
+  result!: BotXAPISyncIdResult;
+
+  toDomain(): string {
+    return this.result.sync_id;
+  }
 }
 
 export class SmartAppCustomNotificationMethod extends AuthorizedBotXMethod {
@@ -34,37 +54,30 @@ export class SmartAppCustomNotificationMethod extends AuthorizedBotXMethod {
 
   async execute(
     payload: BotXAPISmartAppCustomNotificationRequestPayload,
-    waitCallback: boolean,
-    callbackTimeout?: number,
-    defaultCallbackTimeout: number = 30
+    wait_callback: boolean,
+    callback_timeout?: number,
+    default_callback_timeout: number = 30
   ): Promise<BotXAPISmartAppCustomNotificationResponsePayload> {
     const path = "/api/v4/botx/smartapps/notification";
 
     const response = await this.botxMethodCall(
       "POST",
       this.buildUrl(path),
-      { json: payload }
+      { json: payload.jsonableDict() }
     );
 
-    const responseData = await response.json();
-    const result: BotXAPISmartAppCustomNotificationResponsePayload = {
-      status: responseData.status,
-      result: responseData.result,
-      toDomain() {
-        return this.result.sync_id;
-      }
-    };
+    const api_model = await this.verifyAndExtractApiModel(
+      BotXAPISmartAppCustomNotificationResponsePayload,
+      response
+    );
 
-    // Обработка callback (упрощенная версия)
-    if (waitCallback) {
-      await this.processCallback(
-        result.result.sync_id,
-        waitCallback,
-        callbackTimeout || null,
-        defaultCallbackTimeout
-      );
-    }
+    await this.processCallback(
+      api_model.result.sync_id,
+      wait_callback,
+      callback_timeout || null,
+      default_callback_timeout
+    );
 
-    return result;
+    return api_model;
   }
 } 

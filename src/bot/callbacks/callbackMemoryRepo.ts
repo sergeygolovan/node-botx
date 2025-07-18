@@ -24,7 +24,7 @@ export class CallbackMemoryRepo implements CallbackRepoProto {
   }
 
   async setBotxMethodCallbackResult(callback: BotXMethodCallback): Promise<void> {
-    const syncId = (callback as any).syncId;
+    const syncId = callback.sync_id;
     const future = this.getBotxMethodCallback(syncId);
     future.resolve(callback);
   }

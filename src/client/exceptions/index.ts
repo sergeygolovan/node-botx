@@ -46,7 +46,9 @@ export {
 
 // Sticker exceptions
 export { 
-  StickerPackOrStickerNotFoundError 
+  StickerPackOrStickerNotFoundError,
+  InvalidEmojiError,
+  InvalidImageError
 } from "./stickers";
 
 // HTTP exceptions
@@ -60,4 +62,7 @@ export {
 export { 
   BotXMethodFailedCallbackReceivedError, 
   CallbackNotReceivedError 
-} from "./callbacks"; 
+} from "./callbacks";
+
+// SmartApps exceptions
+export { SyncSmartAppEventHandlerNotFoundError } from "../api/smartapps/exceptions"; 

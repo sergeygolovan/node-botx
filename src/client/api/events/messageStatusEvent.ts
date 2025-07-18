@@ -58,7 +58,7 @@ export class MessageStatusMethod extends AuthorizedBotXMethod {
     this.statusHandlers = {
       ...this.statusHandlers,
       404: responseExceptionThrower(EventNotFoundError),
-    } as any;
+    };
   }
 
   async execute(payload: BotXAPIMessageStatusRequestPayload): Promise<BotXAPIMessageStatusResponsePayload> {

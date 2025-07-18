@@ -1,263 +1,499 @@
-import { Missing, Undefined } from "@missing";
+
 import { AsyncBufferReadable } from "@asyncBuffer";
 import { VerifiedPayloadBaseModel, UnverifiedPayloadBaseModel } from "@models";
-import { APIAttachmentTypes, AttachmentTypes, convertAttachmentTypeFromDomain, convertAttachmentTypeToDomain } from "@models";
-import { Readable } from "stream";
+import { APIAttachmentTypes, AttachmentTypes, convertAttachmentTypeToDomain } from "@models";
+
 import { Sticker } from "./stickers";
 import { lookup } from 'mime-types';
+import { IsString, IsNumber, IsBoolean, IsOptional, IsEnum, IsUUID, IsUrl, ValidateNested } from "class-validator";
+import { Type } from "class-transformer";
 
 export abstract class FileAttachmentBase {
+    @IsEnum(AttachmentTypes)
+    type: AttachmentTypes;
+
+    @IsString()
+    filename: string;
+
+    @IsNumber()
+    size: number;
+
+    @IsBoolean()
+    is_async_file: false;
+
+    content: Buffer;
+
     constructor(
-        public type: AttachmentTypes,
-        public fileId: string,
-        public fileName: string,
-        public fileSize: number,
-        public isAsyncFile: false,
-        public content: Buffer,
-    ) {}
+        type: AttachmentTypes,
+        filename: string,
+        size: number,
+        is_async_file: false,
+        content: Buffer,
+    ) {
+        this.type = type;
+        this.filename = filename;
+        this.size = size;
+        this.is_async_file = is_async_file;
+        this.content = content;
+    }
 }
 
 export class AttachmentImage extends FileAttachmentBase {
     override readonly type = AttachmentTypes.IMAGE;
     constructor(
-        fileId: string,
-        public override fileName: string,
-        fileSize: number,
-        isAsyncFile: false,
+        filename: string,
+        size: number,
+        is_async_file: false,
         content: Buffer,
     ) {
-        super(AttachmentTypes.IMAGE, fileId, fileName, fileSize, isAsyncFile, content);
+        super(AttachmentTypes.IMAGE, filename, size, is_async_file, content);
     }
 }
 
 export class AttachmentVideo extends FileAttachmentBase {
     override readonly type = AttachmentTypes.VIDEO;
+    
+    @IsNumber()
+    duration: number;
+
     constructor(
-        fileId: string,
-        public override fileName: string,
-        fileSize: number,
-        isAsyncFile: false,
+        filename: string,
+        size: number,
+        is_async_file: false,
         content: Buffer,
-        public duration: number,
+        duration: number,
     ) {
-        super(AttachmentTypes.VIDEO, fileId, fileName, fileSize, isAsyncFile, content);
+        super(AttachmentTypes.VIDEO, filename, size, is_async_file, content);
+        this.duration = duration;
     }
 }
 
 export class AttachmentDocument extends FileAttachmentBase {
     override readonly type = AttachmentTypes.DOCUMENT;
     constructor(
-        fileId: string,
-        public override fileName: string,
-        fileSize: number,
-        isAsyncFile: false,
+        filename: string,
+        size: number,
+        is_async_file: false,
         content: Buffer,
     ) {
-        super(AttachmentTypes.DOCUMENT, fileId, fileName, fileSize, isAsyncFile, content);
+        super(AttachmentTypes.DOCUMENT, filename, size, is_async_file, content);
     }
 }
 
 export class AttachmentVoice extends FileAttachmentBase {
     override readonly type = AttachmentTypes.VOICE;
+    
+    @IsNumber()
+    duration: number;
+
     constructor(
-        fileId: string,
-        public override fileName: string,
-        fileSize: number,
-        isAsyncFile: false,
+        filename: string,
+        size: number,
+        is_async_file: false,
         content: Buffer,
-        public duration: number,
+        duration: number,
     ) {
-        super(AttachmentTypes.VOICE, fileId, fileName, fileSize, isAsyncFile, content);
+        super(AttachmentTypes.VOICE, filename, size, is_async_file, content);
+        this.duration = duration;
     }
 }
 
 export class Location {
+    @IsString()
+    name: string;
+
+    @IsString()
+    address: string;
+
+    @IsString()
+    latitude: string;
+
+    @IsString()
+    longitude: string;
+
     constructor(
-        public name: string,
-        public address: string,
-        public latitude: string,
-        public longitude: string,
-    ) {}
+        name: string,
+        address: string,
+        latitude: string,
+        longitude: string,
+    ) {
+        this.name = name;
+        this.address = address;
+        this.latitude = latitude;
+        this.longitude = longitude;
+    }
 }
 
 export class Contact {
+    @IsString()
+    name: string;
+
     constructor(
-        public name: string,
-    ) {}
+        name: string,
+    ) {
+        this.name = name;
+    }
 }
 
 export class Link {
+    @IsUrl()
+    url: string;
+
+    @IsString()
+    title: string;
+
+    @IsString()
+    preview: string;
+
+    @IsString()
+    text: string;
+
     constructor(
-        public url: string,
-        public title: string,
-        public preview: string,
-        public text: string,
-    ) {}
+        url: string,
+        title: string,
+        preview: string,
+        text: string,
+    ) {
+        this.url = url;
+        this.title = title;
+        this.preview = preview;
+        this.text = text;
+    }
 }
 
 export type IncomingFileAttachment = AttachmentImage | AttachmentVideo | AttachmentDocument | AttachmentVoice;
 
 export class OutgoingAttachment {
-  public isAsyncFile = false as const;
+  @IsBoolean()
+  public is_async_file = false as const;
 
-  constructor(public content: Buffer, public fileName: string) {}
+  content: Buffer;
+
+  @IsString()
+  filename: string;
+
+  constructor(content: Buffer, filename: string) {
+    this.content = content;
+    this.filename = filename;
+  }
 
   static async fromAsyncBuffer(
     asyncBuffer: AsyncBufferReadable,
-    fileName: string
+    filename: string
   ): Promise<OutgoingAttachment> {
     const buffer = Buffer.from(await asyncBuffer.read());
-    return new OutgoingAttachment(buffer, fileName);
+    return new OutgoingAttachment(buffer, filename);
   }
 }
 
 export class BotAPIAttachmentImageData extends VerifiedPayloadBaseModel {
+    @IsString()
+    content: string;
+
+    @IsString()
+    file_name: string;
+
     constructor(
-        public content: string,
-        public file_name: string,
+        content: string,
+        file_name: string,
     ) {
         super();
+        this.content = content;
+        this.file_name = file_name;
     }
 }
 
 export class BotAPIAttachmentImage extends VerifiedPayloadBaseModel {
+    @IsEnum(APIAttachmentTypes)
+    type: typeof APIAttachmentTypes.IMAGE;
+
+    @ValidateNested()
+    @Type(() => BotAPIAttachmentImageData)
+    data: BotAPIAttachmentImageData;
+
     constructor(
-        public type: typeof APIAttachmentTypes.IMAGE,
-        public data: BotAPIAttachmentImageData,
+        type: typeof APIAttachmentTypes.IMAGE,
+        data: BotAPIAttachmentImageData,
     ) {
         super();
+        this.type = type;
+        this.data = data;
     }
 }
 
 export class BotAPIAttachmentVideoData extends VerifiedPayloadBaseModel {
+    @IsString()
+    content: string;
+
+    @IsString()
+    file_name: string;
+
+    @IsNumber()
+    duration: number;
+
     constructor(
-        public content: string,
-        public file_name: string,
-        public duration: number,
+        content: string,
+        file_name: string,
+        duration: number,
     ) {
         super();
+        this.content = content;
+        this.file_name = file_name;
+        this.duration = duration;
     }
 }
 
 export class BotAPIAttachmentVideo extends VerifiedPayloadBaseModel {
+    @IsEnum(APIAttachmentTypes)
+    type: typeof APIAttachmentTypes.VIDEO;
+
+    @ValidateNested()
+    @Type(() => BotAPIAttachmentVideoData)
+    data: BotAPIAttachmentVideoData;
+
     constructor(
-        public type: typeof APIAttachmentTypes.VIDEO,
-        public data: BotAPIAttachmentVideoData,
+        type: typeof APIAttachmentTypes.VIDEO,
+        data: BotAPIAttachmentVideoData,
     ) {
         super();
+        this.type = type;
+        this.data = data;
     }
 }
 
 export class BotAPIAttachmentDocumentData extends VerifiedPayloadBaseModel {
+    @IsString()
+    content: string;
+
+    @IsString()
+    file_name: string;
+
     constructor(
-        public content: string,
-        public file_name: string,
+        content: string,
+        file_name: string,
     ) {
         super();
+        this.content = content;
+        this.file_name = file_name;
     }
 }
 
 export class BotAPIAttachmentDocument extends VerifiedPayloadBaseModel {
+    @IsEnum(APIAttachmentTypes)
+    type: typeof APIAttachmentTypes.DOCUMENT;
+
+    @ValidateNested()
+    @Type(() => BotAPIAttachmentDocumentData)
+    data: BotAPIAttachmentDocumentData;
+
     constructor(
-        public type: typeof APIAttachmentTypes.DOCUMENT,
-        public data: BotAPIAttachmentDocumentData,
+        type: typeof APIAttachmentTypes.DOCUMENT,
+        data: BotAPIAttachmentDocumentData,
     ) {
         super();
+        this.type = type;
+        this.data = data;
     }
 }
 
 export class BotAPIAttachmentVoiceData extends VerifiedPayloadBaseModel {
+    @IsString()
+    content: string;
+
+    @IsNumber()
+    duration: number;
+
+    @IsOptional()
+    @IsString()
+    file_name?: string;
+
     constructor(
-        public content: string,
-        public duration: number,
-        public file_name?: string,
+        content: string,
+        duration: number,
+        file_name?: string,
     ) {
         super();
+        this.content = content;
+        this.duration = duration;
+        this.file_name = file_name;
     }
 }
 
 export class BotAPIAttachmentVoice extends VerifiedPayloadBaseModel {
+    @IsEnum(APIAttachmentTypes)
+    type: typeof APIAttachmentTypes.VOICE;
+
+    @ValidateNested()
+    @Type(() => BotAPIAttachmentVoiceData)
+    data: BotAPIAttachmentVoiceData;
+
     constructor(
-        public type: typeof APIAttachmentTypes.VOICE,
-        public data: BotAPIAttachmentVoiceData,
+        type: typeof APIAttachmentTypes.VOICE,
+        data: BotAPIAttachmentVoiceData,
     ) {
         super();
+        this.type = type;
+        this.data = data;
     }
 }
 
 export class BotAPIAttachmentLocationData extends VerifiedPayloadBaseModel {
+    @IsString()
+    location_name: string;
+
+    @IsString()
+    location_address: string;
+
+    @IsString()
+    location_lat: string;
+
+    @IsString()
+    location_lng: string;
+
     constructor(
-        public location_name: string,
-        public location_address: string,
-        public location_lat: string,
-        public location_lng: string,
+        location_name: string,
+        location_address: string,
+        location_lat: string,
+        location_lng: string,
     ) {
         super();
+        this.location_name = location_name;
+        this.location_address = location_address;
+        this.location_lat = location_lat;
+        this.location_lng = location_lng;
     }
 }
 
 export class BotAPIAttachmentLocation extends VerifiedPayloadBaseModel {
+    @IsEnum(APIAttachmentTypes)
+    type: typeof APIAttachmentTypes.LOCATION;
+
+    @ValidateNested()
+    @Type(() => BotAPIAttachmentLocationData)
+    data: BotAPIAttachmentLocationData;
+
     constructor(
-        public type: typeof APIAttachmentTypes.LOCATION,
-        public data: BotAPIAttachmentLocationData,
+        type: typeof APIAttachmentTypes.LOCATION,
+        data: BotAPIAttachmentLocationData,
     ) {
         super();
+        this.type = type;
+        this.data = data;
     }
 }
 
 export class BotAPIAttachmentContactData extends VerifiedPayloadBaseModel {
+    @IsString()
+    contact_name: string;
+
     constructor(
-        public contact_name: string,
+        contact_name: string,
     ) {
         super();
+        this.contact_name = contact_name;
     }
 }
 
 export class BotAPIAttachmentContact extends VerifiedPayloadBaseModel {
+    @IsEnum(APIAttachmentTypes)
+    type: typeof APIAttachmentTypes.CONTACT;
+
+    @ValidateNested()
+    @Type(() => BotAPIAttachmentContactData)
+    data: BotAPIAttachmentContactData;
+
     constructor(
-        public type: typeof APIAttachmentTypes.CONTACT,
-        public data: BotAPIAttachmentContactData,
+        type: typeof APIAttachmentTypes.CONTACT,
+        data: BotAPIAttachmentContactData,
     ) {
         super();
+        this.type = type;
+        this.data = data;
     }
 }
 
 export class BotAPIAttachmentStickerData extends VerifiedPayloadBaseModel {
+    @IsUUID()
+    id: string; // UUID
+
+    @IsString()
+    link: string;
+
+    @IsUUID()
+    pack: string; // UUID
+
     constructor(
-        public id: string, // UUID
-        public link: string,
-        public pack: string, // UUID
+        id: string, // UUID
+        link: string,
+        pack: string, // UUID
     ) {
         super();
+        this.id = id;
+        this.link = link;
+        this.pack = pack;
     }
 }
 
 export class BotAPIAttachmentSticker extends VerifiedPayloadBaseModel {
+    @IsEnum(APIAttachmentTypes)
+    type: typeof APIAttachmentTypes.STICKER;
+
+    @ValidateNested()
+    @Type(() => BotAPIAttachmentStickerData)
+    data: BotAPIAttachmentStickerData;
+
     constructor(
-        public type: typeof APIAttachmentTypes.STICKER,
-        public data: BotAPIAttachmentStickerData,
+        type: typeof APIAttachmentTypes.STICKER,
+        data: BotAPIAttachmentStickerData,
     ) {
         super();
+        this.type = type;
+        this.data = data;
     }
 }
 
 export class BotAPIAttachmentLinkData extends VerifiedPayloadBaseModel {
+    @IsUrl()
+    url: string;
+
+    @IsString()
+    url_title: string;
+
+    @IsString()
+    url_preview: string;
+
+    @IsString()
+    url_text: string;
+
     constructor(
-        public url: string,
-        public url_title: string,
-        public url_preview: string,
-        public url_text: string,
+        url: string,
+        url_title: string,
+        url_preview: string,
+        url_text: string,
     ) {
         super();
+        this.url = url;
+        this.url_title = url_title;
+        this.url_preview = url_preview;
+        this.url_text = url_text;
     }
 }
 
 export class BotAPIAttachmentLink extends VerifiedPayloadBaseModel {
+    @IsEnum(APIAttachmentTypes)
+    type: typeof APIAttachmentTypes.LINK;
+
+    @ValidateNested()
+    @Type(() => BotAPIAttachmentLinkData)
+    data: BotAPIAttachmentLinkData;
+
     constructor(
-        public type: typeof APIAttachmentTypes.LINK,
-        public data: BotAPIAttachmentLinkData,
+        type: typeof APIAttachmentTypes.LINK,
+        data: BotAPIAttachmentLinkData,
     ) {
         super();
+        this.type = type;
+        this.data = data;
     }
 }
 
@@ -394,7 +630,6 @@ export function convertAPIAttachmentToDomain(
     const apiImage = apiAttachment as BotAPIAttachmentImage;
     const content = decodeRFC2397(apiImage.data.content);
     return new AttachmentImage(
-      "", // fileId is not available in BotAPIAttachment
       apiImage.data.file_name,
       content.length,
       false,
@@ -406,7 +641,6 @@ export function convertAPIAttachmentToDomain(
     const apiVideo = apiAttachment as BotAPIAttachmentVideo;
     const content = decodeRFC2397(apiVideo.data.content);
     return new AttachmentVideo(
-      "", // fileId is not available
       apiVideo.data.file_name,
       content.length,
       false,
@@ -419,7 +653,6 @@ export function convertAPIAttachmentToDomain(
     const apiDocument = apiAttachment as BotAPIAttachmentDocument;
     const content = decodeRFC2397(apiDocument.data.content);
     return new AttachmentDocument(
-      "", // fileId is not available
       apiDocument.data.file_name,
       content.length,
       false,
@@ -432,7 +665,6 @@ export function convertAPIAttachmentToDomain(
     const content = decodeRFC2397(apiVoice.data.content);
     const ext = getAttachmentExtensionFromEncodedContent(apiVoice.data.content);
     return new AttachmentVoice(
-      "", // fileId is not available
       apiVoice.data.file_name ?? `record.${ext}`,
       content.length,
       false,
@@ -508,18 +740,26 @@ export function encodeRFC2397(content: Buffer, mimetype: string): string {
 }
 
 export class BotXAPIAttachment extends UnverifiedPayloadBaseModel {
+  @IsString()
+  file_name: string;
+
+  @IsString()
+  data: string;
+
   constructor(
-    public file_name: string,
-    public data: string
+    file_name: string,
+    data: string
   ) {
     super();
+    this.file_name = file_name;
+    this.data = data;
   }
 
   static fromFileAttachment(
     attachment: IncomingFileAttachment | OutgoingAttachment
   ): BotXAPIAttachment {
-    const mimetype = lookup(attachment.fileName) || 'application/octet-stream';
+    const mimetype = lookup(attachment.filename) || 'application/octet-stream';
     const data = encodeRFC2397(attachment.content, mimetype);
-    return new BotXAPIAttachment(attachment.fileName, data);
+    return new BotXAPIAttachment(attachment.filename, data);
   }
 }

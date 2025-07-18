@@ -1,20 +1,33 @@
-import { AuthorizedBotXMethod } from "../../authorizedBotxMethod";
-import { HttpClient } from "../../httpClient";
-import { BotAccountsStorage } from "../../../bot/botAccountsStorage";
+import { AuthorizedBotXMethod, HttpClient } from "@client";
+import { BotAccountsStorage } from "@bot";
+import { UnverifiedPayloadBaseModel, VerifiedPayloadBaseModel } from "@models";
 
-export interface BotXAPISmartAppUnreadCounterRequestPayload {
-  groupChatId: string;
-  counter: number;
+export class BotXAPISmartAppUnreadCounterRequestPayload extends UnverifiedPayloadBaseModel {
+  group_chat_id!: string;
+  counter!: number;
+
+  static fromDomain(
+    group_chat_id: string,
+    counter: number
+  ): BotXAPISmartAppUnreadCounterRequestPayload {
+    return new BotXAPISmartAppUnreadCounterRequestPayload({
+      group_chat_id,
+      counter,
+    });
+  }
 }
 
-export interface BotXAPISyncIdResult {
-  syncId: string;
+export class BotXAPISyncIdResult extends VerifiedPayloadBaseModel {
+  sync_id!: string;
 }
 
-export interface BotXAPISmartAppUnreadCounterResponsePayload {
-  status: "ok";
-  result: BotXAPISyncIdResult;
-  toDomain(): string;
+export class BotXAPISmartAppUnreadCounterResponsePayload extends VerifiedPayloadBaseModel {
+  status!: "ok";
+  result!: BotXAPISyncIdResult;
+
+  toDomain(): string {
+    return this.result.sync_id;
+  }
 }
 
 export class SmartAppUnreadCounterMethod extends AuthorizedBotXMethod {
@@ -28,37 +41,30 @@ export class SmartAppUnreadCounterMethod extends AuthorizedBotXMethod {
 
   async execute(
     payload: BotXAPISmartAppUnreadCounterRequestPayload,
-    waitCallback: boolean,
-    callbackTimeout?: number,
-    defaultCallbackTimeout: number = 30
+    wait_callback: boolean,
+    callback_timeout?: number,
+    default_callback_timeout: number = 30
   ): Promise<BotXAPISmartAppUnreadCounterResponsePayload> {
     const path = "/api/v4/botx/smartapps/unread_counter";
 
     const response = await this.botxMethodCall(
       "POST",
       this.buildUrl(path),
-      { json: payload }
+      { json: payload.jsonableDict() }
     );
 
-    const responseData = await response.json();
-    const result: BotXAPISmartAppUnreadCounterResponsePayload = {
-      status: responseData.status,
-      result: responseData.result,
-      toDomain() {
-        return this.result.syncId;
-      }
-    };
+    const api_model = await this.verifyAndExtractApiModel(
+      BotXAPISmartAppUnreadCounterResponsePayload,
+      response
+    );
 
-    // Обработка callback (упрощенная версия)
-    if (waitCallback) {
-      await this.processCallback(
-        result.result.syncId,
-        waitCallback,
-        callbackTimeout || null,
-        defaultCallbackTimeout
-      );
-    }
+    await this.processCallback(
+      api_model.result.sync_id,
+      wait_callback,
+      callback_timeout || null,
+      default_callback_timeout
+    );
 
-    return result;
+    return api_model;
   }
 } 

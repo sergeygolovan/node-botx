@@ -28,7 +28,7 @@ export class DeleteEventMethod extends AuthorizedBotXMethod {
     this.statusHandlers = {
       ...this.statusHandlers,
       404: responseExceptionThrower(MessageNotFoundError),
-    } as any;
+    };
   }
 
   async execute(payload: BotXAPIDeleteEventRequestPayload): Promise<BotXAPIDeleteEventResponsePayload> {

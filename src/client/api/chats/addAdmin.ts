@@ -1,4 +1,4 @@
-import { AuthorizedBotXMethod, HttpClient, responseExceptionThrower, InvalidBotXStatusCodeError } from "@client";
+import { AuthorizedBotXMethod, HttpClient, responseExceptionThrower, InvalidBotXStatusCodeError, HttpResponse } from "@client";
 import { BotAccountsStorage } from "@bot";
 import { UnverifiedPayloadBaseModel, VerifiedPayloadBaseModel } from "@models";
 import { PermissionDeniedError, ChatNotFoundError, CantUpdatePersonalChatError, InvalidUsersListError } from "@client/exceptions";
@@ -19,7 +19,7 @@ export class BotXAPIAddAdminResponsePayload extends VerifiedPayloadBaseModel {
   status!: "ok";
 }
 
-async function badRequestErrorHandler(response: Response): Promise<never> {
+async function badRequestErrorHandler(response: HttpResponse): Promise<never> {
   const responseData = await response.json();
   const reason = responseData.reason;
 
@@ -39,9 +39,9 @@ export class AddAdminMethod extends AuthorizedBotXMethod {
     botAccountsStorage: BotAccountsStorage
   ) {
     super(senderBotId, httpClient, botAccountsStorage);
-    (this.statusHandlers as any) = {
+    this.statusHandlers = {
       ...this.statusHandlers,
-      400: badRequestErrorHandler as any,
+      400: badRequestErrorHandler,
       403: responseExceptionThrower(PermissionDeniedError),
       404: responseExceptionThrower(ChatNotFoundError),
     };

@@ -15,6 +15,6 @@ export { Undefined };
 export type { UndefinedType };
 
 // Helper function to check if value is Undefined
-export function isUndefined(value: any): value is UndefinedType {
+export function isUndefined(value: unknown): value is UndefinedType {
   return value === Undefined;
 }

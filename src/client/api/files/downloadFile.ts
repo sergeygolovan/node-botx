@@ -1,7 +1,7 @@
 import { AuthorizedBotXMethod, HttpClient, responseExceptionThrower, InvalidBotXStatusCodeError } from "@client";
 import { AsyncBufferWritable } from "@asyncBuffer";
 import { BotAccountsStorage } from "@bot";
-import { UnverifiedPayloadBaseModel, VerifiedPayloadBaseModel } from "@models";
+import { UnverifiedPayloadBaseModel } from "@models";
 import { ChatNotFoundError, FileDeletedError, FileMetadataNotFound } from "@client/exceptions";
 import type { HttpResponse } from "@client/httpClient";
 
@@ -46,7 +46,7 @@ export class DownloadFileMethod extends AuthorizedBotXMethod {
       ...this.statusHandlers,
       204: responseExceptionThrower(FileDeletedError),
       404: notFoundErrorHandler,
-    } as any;
+    };
   }
 
   async execute(

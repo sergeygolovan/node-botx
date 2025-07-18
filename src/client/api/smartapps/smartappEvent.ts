@@ -19,26 +19,26 @@ export class BotXAPISmartAppEventRequestPayload extends UnverifiedPayloadBaseMod
 
   static fromDomain(
     ref: MissingOptional<string>,
-    smartappId: string,
-    chatId: string,
+    smartapp_id: string,
+    chat_id: string,
     data: Record<string, any>,
     opts: Missing<Record<string, any>>,
     files: Missing<File[]>,
     encrypted: boolean
   ): BotXAPISmartAppEventRequestPayload {
-    let apiAsyncFiles: Missing<APIAsyncFile[]> = Undefined;
+    let api_async_files: Missing<APIAsyncFile[]> = Undefined;
     if (files !== Undefined) {
-      apiAsyncFiles = files.map((file: File) => convertAsyncFileFromDomain(file));
+      api_async_files = files.map((file: File) => convertAsyncFileFromDomain(file));
     }
 
     return new BotXAPISmartAppEventRequestPayload({
       ref,
-      smartapp_id: smartappId,
-      group_chat_id: chatId,
+      smartapp_id,
+      group_chat_id: chat_id,
       data,
       opts,
       smartapp_api_version: SMARTAPP_API_VERSION,
-      async_files: apiAsyncFiles,
+      async_files: api_async_files,
       encrypted,
     });
   }

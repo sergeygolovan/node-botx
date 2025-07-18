@@ -1,4 +1,5 @@
 import { Sticker, StickerPack, VerifiedPayloadBaseModel } from "../../../models";
+import { Missing, Undefined } from "@missing";
 
 export class BotXAPIGetStickerResult extends VerifiedPayloadBaseModel {
   id!: string;
@@ -11,7 +12,7 @@ export class BotXAPIGetStickerPackResult extends VerifiedPayloadBaseModel {
   name!: string;
   public!: boolean;
   stickers!: BotXAPIGetStickerResult[];
-  stickers_order?: string[];
+  stickers_order!: Missing<string[]>;
 }
 
 export class BotXAPIGetStickerPackResponsePayload extends VerifiedPayloadBaseModel {
@@ -20,10 +21,11 @@ export class BotXAPIGetStickerPackResponsePayload extends VerifiedPayloadBaseMod
 
   toDomain(): StickerPack {
     // Сортируем стикеры по порядку, если есть stickers_order
-    if (this.result.stickers_order) {
+    if (this.result.stickers_order !== Undefined) {
+      const stickersOrder = this.result.stickers_order as string[];
       this.result.stickers.sort((a, b) => {
-        const aIndex = this.result.stickers_order!.indexOf(a.id);
-        const bIndex = this.result.stickers_order!.indexOf(b.id);
+        const aIndex = stickersOrder.indexOf(a.id);
+        const bIndex = stickersOrder.indexOf(b.id);
         return aIndex - bIndex;
       });
     }

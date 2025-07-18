@@ -7,7 +7,7 @@ export class EditMessage {
     public botId: string,
     public syncId: string,
     public body: Missing<string> = Undefined,
-    public metadata: Missing<{ [key: string]: any }> = Undefined,
+    public metadata: Missing<Record<string, unknown>> = Undefined,
     public bubbles: Missing<BubbleMarkup> = Undefined,
     public keyboard: Missing<KeyboardMarkup> = Undefined,
     public file: Missing<

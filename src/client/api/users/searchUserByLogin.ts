@@ -8,10 +8,10 @@ export class BotXAPISearchUserByLoginRequestPayload extends UnverifiedPayloadBas
   ad_login!: string;
   ad_domain!: string;
 
-  static fromDomain(adLogin: string, adDomain: string): BotXAPISearchUserByLoginRequestPayload {
+  static fromDomain(ad_login: string, ad_domain: string): BotXAPISearchUserByLoginRequestPayload {
     return new BotXAPISearchUserByLoginRequestPayload({
-      ad_login: adLogin,
-      ad_domain: adDomain,
+      ad_login,
+      ad_domain,
     });
   }
 }
@@ -22,9 +22,9 @@ export class BotXAPISearchUserResponsePayload extends VerifiedPayloadBaseModel {
 
   toDomain(): UserFromSearch {
     return new UserFromSearch(
-      this.result.userHuid,
-      this.result.adLogin || null,
-      this.result.adDomain || null,
+      this.result.user_huid,
+      this.result.ad_login || null,
+      this.result.ad_domain || null,
       this.result.name,
       this.result.company || null,
       this.result.companyPosition || null,
@@ -58,7 +58,7 @@ export class SearchUserByLoginMethod extends AuthorizedBotXMethod {
     this.statusHandlers = {
       ...this.statusHandlers,
       404: responseExceptionThrower(UserNotFoundError),
-    } as any;
+    };
   }
 
   async execute(payload: BotXAPISearchUserByLoginRequestPayload): Promise<BotXAPISearchUserResponsePayload> {

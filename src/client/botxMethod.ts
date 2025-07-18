@@ -6,8 +6,8 @@ import { ClientErrorConstructor } from "./exceptions/base";
 import { logger } from "@logger";
 
 // Типы для обработчиков ошибок
-type StatusHandler = (response: HttpResponse) => Promise<never>;
-type StatusHandlers = Record<number, StatusHandler>;
+export type StatusHandler = (response: HttpResponse) => Promise<never>;
+export type StatusHandlers = Record<number, StatusHandler>;
 type CallbackExceptionHandler = (callback: BotAPIMethodFailedCallback) => never;
 type ErrorCallbackHandlers = Record<string, CallbackExceptionHandler>;
 
@@ -23,7 +23,7 @@ export class BotXMethod {
   ) {}
 
   // Метод execute должен быть переопределен в наследниках
-  async execute(...args: any[]): Promise<any> {
+  async execute(..._args: any[]): Promise<any> {
     throw new Error("You should define `execute` method");
   }
 

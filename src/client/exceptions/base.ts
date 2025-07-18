@@ -24,7 +24,7 @@ export class BaseClientError extends Error {
   }
 
   static fromCallback(this: new (message: string) => BaseClientError, callback: BotAPIMethodFailedCallback, comment?: string): BaseClientError {
-    let message = `BotX method call with sync_id \`${callback.syncId}\` failed with: ${JSON.stringify(callback)}`;
+    let message = `BotX method call with sync_id \`${callback.sync_id}\` failed with: ${JSON.stringify(callback)}`;
 
     if (comment) {
       message = `${message}\n\nComment: ${comment}`;

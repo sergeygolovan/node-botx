@@ -1,20 +1,23 @@
 import { AuthorizedBotXMethod, HttpClient, responseExceptionThrower } from "@client";
 import { BotAccountsStorage } from "@bot";
-import { UnverifiedPayloadBaseModel } from "@models";
-import { BotXAPIGetStickerPackResponsePayload } from "./stickerPack";
+import { UnverifiedPayloadBaseModel, VerifiedPayloadBaseModel } from "@models";
 import { StickerPackOrStickerNotFoundError } from "@client/exceptions/stickers";
 
-export class BotXAPIGetStickerPackRequestPayload extends UnverifiedPayloadBaseModel {
-  sticker_pack_id!: string;
+export class BotXAPIDeleteStickerPackRequestPayload extends UnverifiedPayloadBaseModel {
+  sticker_pack_id!: string; // UUID
 
-  static fromDomain(stickerPackId: string): BotXAPIGetStickerPackRequestPayload {
-    return new BotXAPIGetStickerPackRequestPayload({
+  static fromDomain(stickerPackId: string): BotXAPIDeleteStickerPackRequestPayload {
+    return new BotXAPIDeleteStickerPackRequestPayload({
       sticker_pack_id: stickerPackId,
     });
   }
 }
 
-export class GetStickerPackMethod extends AuthorizedBotXMethod {
+export class BotXAPIDeleteStickerPackResponsePayload extends VerifiedPayloadBaseModel {
+  status!: "ok";
+}
+
+export class DeleteStickerPackMethod extends AuthorizedBotXMethod {
   constructor(
     senderBotId: string,
     httpClient: HttpClient,
@@ -27,15 +30,15 @@ export class GetStickerPackMethod extends AuthorizedBotXMethod {
     };
   }
 
-  async execute(payload: BotXAPIGetStickerPackRequestPayload): Promise<BotXAPIGetStickerPackResponsePayload> {
+  async execute(payload: BotXAPIDeleteStickerPackRequestPayload): Promise<BotXAPIDeleteStickerPackResponsePayload> {
     const jsonableDict = payload.jsonableDict();
     const path = `/api/v3/botx/stickers/packs/${jsonableDict.sticker_pack_id}`;
 
     const response = await this.botxMethodCall(
-      "GET",
+      "DELETE",
       this.buildUrl(path)
     );
 
-    return this.verifyAndExtractApiModel(BotXAPIGetStickerPackResponsePayload, response);
+    return this.verifyAndExtractApiModel(BotXAPIDeleteStickerPackResponsePayload, response);
   }
 } 

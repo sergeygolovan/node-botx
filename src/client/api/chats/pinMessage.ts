@@ -30,7 +30,7 @@ export class PinMessageMethod extends AuthorizedBotXMethod {
       ...this.statusHandlers,
       403: responseExceptionThrower(PermissionDeniedError),
       404: responseExceptionThrower(ChatNotFoundError),
-    } as any;
+    };
   }
 
   async execute(payload: BotXAPIPinMessageRequestPayload): Promise<void> {

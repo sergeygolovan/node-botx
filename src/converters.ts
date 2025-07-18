@@ -1,4 +1,4 @@
-import { parseBotAPICommand as parseBotAPICommandFromBase } from "./models/baseCommand";
+import { parseBotAPICommand as parseBotAPICommandFromParsers } from "./models/parsers";
 import type { BotAPICommand } from "./models/commands";
 import { convertChatTypeFromDomain } from "./models/enums";
 
@@ -16,7 +16,7 @@ export function getBotIdFromRequest(rawBotCommand: Record<string, any>): string 
 }
 
 export function parseBotAPICommand(rawBotCommand: Record<string, any>): BotAPICommand {
-    return parseBotAPICommandFromBase(rawBotCommand);
+    return parseBotAPICommandFromParsers(rawBotCommand);
 }
 
 // Re-export convertChatTypeFromDomain for compatibility

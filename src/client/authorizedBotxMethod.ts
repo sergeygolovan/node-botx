@@ -1,4 +1,4 @@
-import { BotXMethod, responseExceptionThrower } from "./botxMethod";
+import { BotXMethod, responseExceptionThrower, StatusHandlers } from "./botxMethod";
 import { BotAccountsStorage } from "@bot";
 import { CallbackManager } from "@bot";
 import { getToken } from "./getToken";
@@ -6,7 +6,7 @@ import { HttpClient, HttpResponse } from "./httpClient";
 import { InvalidBotAccountError } from "./exceptions/common";
 
 export class AuthorizedBotXMethod extends BotXMethod {
-  statusHandlers = { 
+  statusHandlers: StatusHandlers = {
     401: responseExceptionThrower(InvalidBotAccountError)
   };
   errorCallbackHandlers: Record<string, any> = {};

@@ -2,11 +2,15 @@ import { AuthorizedBotXMethod, HttpClient } from "@client";
 import { BotAccountsStorage } from "@bot";
 
 export interface BotXAPIStopTypingEventRequestPayload {
-  groupChatId: string;
+  group_chat_id: string;
 }
 
-export interface BotXAPIStopTypingEventResponsePayload {
+export class BotXAPIStopTypingEventResponsePayload {
   status: "ok";
+
+  constructor(data: any) {
+    this.status = data.status;
+  }
 }
 
 export class StopTypingEventMethod extends AuthorizedBotXMethod {
@@ -18,7 +22,7 @@ export class StopTypingEventMethod extends AuthorizedBotXMethod {
     super(senderBotId, httpClient, botAccountsStorage);
   }
 
-  async execute(payload: BotXAPIStopTypingEventRequestPayload): Promise<void> {
+  async execute(payload: BotXAPIStopTypingEventRequestPayload): Promise<BotXAPIStopTypingEventResponsePayload> {
     const path = "/api/v3/botx/events/stop_typing";
 
     const response = await this.botxMethodCall(
@@ -27,10 +31,6 @@ export class StopTypingEventMethod extends AuthorizedBotXMethod {
       { json: payload }
     );
 
-    const responseData = await response.json();
-    // Проверяем, что статус "ok"
-    if (responseData.status !== "ok") {
-      throw new Error(`Unexpected response status: ${responseData.status}`);
-    }
+    return this.verifyAndExtractApiModel(BotXAPIStopTypingEventResponsePayload, response);
   }
 } 

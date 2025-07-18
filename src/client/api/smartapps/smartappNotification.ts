@@ -1,21 +1,39 @@
-import { AuthorizedBotXMethod } from "../../authorizedBotxMethod";
-import { HttpClient } from "../../httpClient";
-import { BotAccountsStorage } from "../../../bot/botAccountsStorage";
+import { AuthorizedBotXMethod, HttpClient } from "@client";
+import { BotAccountsStorage } from "@bot";
+import { UnverifiedPayloadBaseModel, VerifiedPayloadBaseModel } from "@models";
+import { Missing } from "@missing";
 
 // Константы
 const SMARTAPP_API_VERSION = 1;
 
-export interface BotXAPISmartAppNotificationRequestPayload {
-  group_chat_id: string;
-  smartapp_counter: number;
-  body?: string;
-  opts?: Record<string, any>;
-  meta?: Record<string, any>;
-  smartapp_api_version: number;
+export class BotXAPISmartAppNotificationRequestPayload extends UnverifiedPayloadBaseModel {
+  group_chat_id!: string;
+  smartapp_counter!: number;
+  body!: Missing<string>;
+  opts!: Missing<Record<string, any>>;
+  meta!: Missing<Record<string, any>>;
+  smartapp_api_version!: number;
+
+  static fromDomain(
+    chat_id: string,
+    smartapp_counter: number,
+    body: Missing<string>,
+    opts: Missing<Record<string, any>>,
+    meta: Missing<Record<string, any>>
+  ): BotXAPISmartAppNotificationRequestPayload {
+    return new BotXAPISmartAppNotificationRequestPayload({
+      group_chat_id: chat_id,
+      smartapp_counter,
+      body,
+      opts,
+      meta,
+      smartapp_api_version: SMARTAPP_API_VERSION,
+    });
+  }
 }
 
-export interface BotXAPISmartAppNotificationResponsePayload {
-  status: "ok";
+export class BotXAPISmartAppNotificationResponsePayload extends VerifiedPayloadBaseModel {
+  status!: "ok";
 }
 
 export class SmartAppNotificationMethod extends AuthorizedBotXMethod {
@@ -30,8 +48,9 @@ export class SmartAppNotificationMethod extends AuthorizedBotXMethod {
   async execute(payload: BotXAPISmartAppNotificationRequestPayload): Promise<void> {
     const path = "/api/v3/botx/smartapps/notification";
 
-    // Подготавливаем JSON для отправки
-    const json = { ...payload };
+    // TODO: Remove opts
+    // UnverifiedPayloadBaseModel.jsonableDict remove empty dicts
+    const json = payload.jsonableDict();
     json.opts = json.opts || {};
 
     const response = await this.botxMethodCall(
@@ -40,10 +59,9 @@ export class SmartAppNotificationMethod extends AuthorizedBotXMethod {
       { json }
     );
 
-    const responseData = await response.json();
-    // Проверяем, что статус "ok"
-    if (responseData.status !== "ok") {
-      throw new Error(`Unexpected response status: ${responseData.status}`);
-    }
+    this.verifyAndExtractApiModel(
+      BotXAPISmartAppNotificationResponsePayload,
+      response
+    );
   }
 } 

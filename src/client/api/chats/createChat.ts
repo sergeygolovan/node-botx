@@ -1,7 +1,7 @@
 import { AuthorizedBotXMethod, HttpClient, responseExceptionThrower } from "@client";
 import { BotAccountsStorage } from "@bot";
-import { Chat, ChatTypes, UnverifiedPayloadBaseModel, VerifiedPayloadBaseModel, convertChatTypeFromDomain } from "@models";
-import { Missing, Undefined } from "@missing";
+import { ChatTypes, UnverifiedPayloadBaseModel, VerifiedPayloadBaseModel, convertChatTypeFromDomain } from "@models";
+import { Missing } from "@missing";
 import { ChatCreationError, ChatCreationProhibitedError } from "@client/exceptions/chats";
 
 export class BotXAPICreateChatRequestPayload extends UnverifiedPayloadBaseModel {
@@ -13,14 +13,14 @@ export class BotXAPICreateChatRequestPayload extends UnverifiedPayloadBaseModel 
 
   static fromDomain(
     name: string,
-    chatType: ChatTypes,
+    chat_type: ChatTypes,
     huids: string[],
     sharedHistory: Missing<boolean>,
     description?: string
   ): BotXAPICreateChatRequestPayload {
     return new BotXAPICreateChatRequestPayload({
       name,
-      chat_type: convertChatTypeFromDomain(chatType),
+      chat_type: convertChatTypeFromDomain(chat_type),
       members: huids,
       description,
       shared_history: sharedHistory,
@@ -48,7 +48,7 @@ export class CreateChatMethod extends AuthorizedBotXMethod {
     botAccountsStorage: BotAccountsStorage
   ) {
     super(senderBotId, httpClient, botAccountsStorage);
-    (this.statusHandlers as any) = {
+    this.statusHandlers = {
       ...this.statusHandlers,
       403: responseExceptionThrower(ChatCreationProhibitedError),
       422: responseExceptionThrower(ChatCreationError),

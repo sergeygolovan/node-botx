@@ -1,44 +1,43 @@
-import { BotAPISystemEventTypes, IncomingChatTypes, BotAccount, Chat } from "@models";
+import { BotAccount, Chat, BotAPISystemEventTypes, convertChatTypeToDomain } from "@models";
 
 export class JoinToChatEvent {
   constructor(
     public bot: BotAccount,
-    public rawCommand: Record<string, unknown>,
-    public huids: string[], // UUID[] как string[]
+    public rawCommand: Record<string, any>,
+    public huids: string[],
     public chat: Chat
   ) {}
 }
 
-export interface BotAPIJoinToChatData {
-  addedMembers: string[]; // UUID[] как string[]
+export class BotAPIJoinToChatData {
+  constructor(
+    public added_members: string[]
+  ) {}
 }
 
-export interface BotAPIJoinToChatPayload {
-  body: BotAPISystemEventTypes.JOIN_TO_CHAT;
-  data: BotAPIJoinToChatData;
+export class BotAPIJoinToChatPayload {
+  constructor(
+    public body: BotAPISystemEventTypes,
+    public data: BotAPIJoinToChatData
+  ) {}
 }
 
-export interface BotAPIJoinToChat {
-  botId: string;
-  command: BotAPIJoinToChatPayload;
-  from: {
-    host: string;
-    groupChatId: string;
-    chatType: string;
-  };
-}
+export class BotAPIJoinToChat {
+  constructor(
+    public bot_id: string,
+    public payload: BotAPIJoinToChatPayload,
+    public sender: { group_chat_id: string; chat_type: string; host?: string }
+  ) {}
 
-export function toDomainJoinToChat(
-  api: BotAPIJoinToChat,
-  rawCommand: Record<string, unknown>
-): JoinToChatEvent {
-  return new JoinToChatEvent(
-    new BotAccount(api.botId, api.from.host),
-    rawCommand,
-    api.command.data.addedMembers,
-    new Chat(
-      api.from.groupChatId,
-      api.from.chatType as IncomingChatTypes
-    )
-  );
+  toDomain(rawCommand: Record<string, any>): JoinToChatEvent {
+    return new JoinToChatEvent(
+      new BotAccount(this.bot_id, this.sender.host),
+      rawCommand,
+      this.payload.data.added_members,
+      new Chat(
+        this.sender.group_chat_id,
+        convertChatTypeToDomain(this.sender.chat_type)
+      )
+    );
+  }
 } 

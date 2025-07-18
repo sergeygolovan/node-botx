@@ -18,7 +18,7 @@ export class BotXAPIUpdateUserProfileRequestPayload extends UnverifiedPayloadBas
   manager!: Missing<string>;
 
   static fromDomain(
-    userHuid: string,
+    user_huid: string,
     avatar: Missing<IncomingFileAttachment | OutgoingAttachment> = Undefined,
     name: Missing<string> = Undefined,
     publicName: Missing<string> = Undefined,
@@ -34,7 +34,7 @@ export class BotXAPIUpdateUserProfileRequestPayload extends UnverifiedPayloadBas
       apiAvatar = BotXAPIAttachment.fromFileAttachment(avatar).data;
     }
     return new BotXAPIUpdateUserProfileRequestPayload({
-      user_huid: userHuid,
+      user_huid: user_huid,
       name,
       public_name: publicName,
       avatar: apiAvatar,
@@ -64,7 +64,7 @@ export class UpdateUsersProfileMethod extends AuthorizedBotXMethod {
       ...this.statusHandlers,
       400: responseExceptionThrower(InvalidProfileDataError),
       404: responseExceptionThrower(UserNotFoundError),
-    } as any;
+    };
   }
 
   async execute(payload: BotXAPIUpdateUserProfileRequestPayload): Promise<BotXAPIUpdateUserProfileResponsePayload> {

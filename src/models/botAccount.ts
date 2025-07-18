@@ -1,7 +1,12 @@
 import { URL } from "url";
+import { IsString, IsOptional, IsUrl, IsUUID } from "class-validator";
 
 export class BotAccount {
-  id: string; // UUID как строка
+  @IsUUID()
+  id: string;
+
+  @IsOptional()
+  @IsString()
   host?: string | null;
 
   constructor(id: string, host?: string | null) {
@@ -11,16 +16,21 @@ export class BotAccount {
 }
 
 export class BotAccountWithSecret {
+  @IsUUID()
   readonly id: string;
-  readonly ctsUrl: string;
-  readonly secretKey: string;
+
+  @IsUrl()
+  readonly cts_url: string;
+
+  @IsString()
+  readonly secret_key: string;
 
   private _host?: string;
 
-  constructor(id: string, ctsUrl: string, secretKey: string) {
+  constructor(id: string, cts_url: string, secret_key: string) {
     this.id = id;
-    this.ctsUrl = ctsUrl;
-    this.secretKey = secretKey;
+    this.cts_url = cts_url;
+    this.secret_key = secret_key;
   }
 
   get host(): string {
@@ -29,14 +39,14 @@ export class BotAccountWithSecret {
     }
 
     try {
-      const url = new URL(this.ctsUrl);
+      const url = new URL(this.cts_url);
       if (!url.hostname) {
-        throw new Error("Could not parse host from ctsUrl.");
+        throw new Error("Could not parse host from cts_url.");
       }
       this._host = url.hostname;
       return this._host;
     } catch {
-      throw new Error("Could not parse host from ctsUrl.");
+      throw new Error("Could not parse host from cts_url.");
     }
   }
 }

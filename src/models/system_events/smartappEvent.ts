@@ -3,7 +3,7 @@ import { BotAccount, Chat, File, APIAsyncFile, convertAsyncFileToDomain, BotAPIC
 export class SmartAppEvent {
   constructor(
     public bot: BotAccount,
-    public smartappId: string,
+    public smartapp_id: string,
     public data: Record<string, any>,
     public files: File[],
     public chat: Chat,
@@ -11,24 +11,24 @@ export class SmartAppEvent {
     public rawCommand?: Record<string, any>,
     public ref?: string | null,
     public opts?: Record<string, any> | null,
-    public smartappApiVersion?: number | null
+    public smartapp_api_version?: number | null
   ) {}
 }
 
 export class BotAPISmartAppData {
   constructor(
     public ref: string,
-    public smartappId: string,
+    public smartapp_id: string,
     public data: Record<string, any>,
     public opts: Record<string, any>,
-    public smartappApiVersion: number
+    public smartapp_api_version: number
   ) {}
 }
 
 export class BotAPISmartAppPayload {
   constructor(
     public body: BotAPISystemEventTypes,
-    public commandType: BotAPICommandTypes,
+    public command_type: BotAPICommandTypes,
     public data: BotAPISmartAppData,
     public metadata: Record<string, any>
   ) {}
@@ -37,21 +37,21 @@ export class BotAPISmartAppPayload {
 export class BotAPISmartAppEventContext {
   constructor(
     public host: string,
-    public userHuid: string,
-    public groupChatId: string,
-    public chatType: string,
-    public userUdid?: string,
-    public adDomain?: string,
-    public adLogin?: string,
+    public user_huid: string,
+    public group_chat_id: string,
+    public chat_type: string,
+    public user_udid?: string,
+    public ad_domain?: string,
+    public ad_login?: string,
     public username?: string,
-    public isAdmin?: boolean,
-    public isCreator?: boolean,
-    public appVersion?: string,
+    public is_admin?: boolean,
+    public is_creator?: boolean,
+    public app_version?: string,
     public platform?: string,
-    public platformPackageId?: string,
+    public platform_package_id?: string,
     public device?: string,
-    public deviceMeta?: Record<string, any>,
-    public deviceSoftware?: string,
+    public device_meta?: Record<string, any>,
+    public device_software?: string,
     public manufacturer?: string,
     public locale?: string
   ) {}
@@ -64,7 +64,7 @@ export class BotAPISmartAppEvent extends BotAPIBaseCommandModel {
     protoVersion: number,
     public payload: BotAPISmartAppPayload,
     public sender: BotAPISmartAppEventContext,
-    public asyncFiles: APIAsyncFile[]
+    public async_files: APIAsyncFile[]
   ) {
     super(botId, syncId, protoVersion);
   }
@@ -74,41 +74,41 @@ export class BotAPISmartAppEvent extends BotAPIBaseCommandModel {
     const device = new UserDevice(
       this.sender.manufacturer ?? null,
       this.sender.device ?? null,
-      this.sender.deviceSoftware ?? null,
+      this.sender.device_software ?? null,
       undefined,
       undefined,
       undefined,
       platform ? convertClientPlatformToDomain(platform as BotAPIClientPlatforms) : null,
-      this.sender.platformPackageId ?? null,
-      this.sender.appVersion ?? null,
+      this.sender.platform_package_id ?? null,
+      this.sender.app_version ?? null,
       this.sender.locale ?? null
     );
 
     const sender = new UserSender(
-      this.sender.userHuid,
-      this.sender.userUdid,
-      this.sender.adLogin,
-      this.sender.adDomain,
+      this.sender.user_huid,
+      this.sender.user_udid,
+      this.sender.ad_login,
+      this.sender.ad_domain,
       this.sender.username,
-      this.sender.isAdmin,
-      this.sender.isCreator,
+      this.sender.is_admin,
+      this.sender.is_creator,
       device
     );
 
     return new SmartAppEvent(
       new BotAccount(this.bot_id, this.sender.host),
-      this.payload.data.smartappId,
+      this.payload.data.smartapp_id,
       this.payload.data.data,
-      this.asyncFiles.map(convertAsyncFileToDomain),
+      this.async_files.map(convertAsyncFileToDomain),
       new Chat(
-        this.sender.groupChatId,
-        convertChatTypeToDomain(this.sender.chatType)
+        this.sender.group_chat_id,
+        convertChatTypeToDomain(this.sender.chat_type)
       ),
       sender,
       rawCommand,
       this.payload.data.ref ?? null,
       this.payload.data.opts ?? null,
-      this.payload.data.smartappApiVersion ?? null
+      this.payload.data.smartapp_api_version ?? null
     );
   }
 } 

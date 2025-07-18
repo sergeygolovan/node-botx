@@ -2,7 +2,7 @@
 import { isPlainObject } from "lodash";
 import { Undefined } from "../missing";
 
-function removeUndefined(originObj: any): any {
+function removeUndefined(originObj: unknown): unknown {
   if (Array.isArray(originObj)) {
     const newList = [];
     for (const value of originObj) {
@@ -22,8 +22,8 @@ function removeUndefined(originObj: any): any {
     }
     return newList;
   } else if (isPlainObject(originObj)) {
-    const newDict: Record<string, any> = {};
-    for (const [key, value] of Object.entries(originObj)) {
+    const newDict: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(originObj as Record<string, unknown>)) {
       if (value === Undefined) continue;
       if (Array.isArray(value) || isPlainObject(value)) {
         const newValue = removeUndefined(value);
@@ -47,7 +47,7 @@ function removeUndefined(originObj: any): any {
 }
 
 export abstract class PayloadBaseModel {
-  abstract toObject(): Record<string, any>;
+  abstract toObject(): Record<string, unknown>;
 
   // Аналог Python json() метода
   json(): string {
@@ -56,7 +56,7 @@ export abstract class PayloadBaseModel {
   }
 
   // Аналог Python jsonable_dict() метода
-  jsonableDict(): Record<string, any> {
+  jsonableDict(): Record<string, unknown> {
     return JSON.parse(this.json());
   }
 
@@ -67,14 +67,14 @@ export abstract class PayloadBaseModel {
 }
 
 export class VerifiedPayloadBaseModel extends PayloadBaseModel {
-  constructor(data: Record<string, any> = {}, fieldsSet?: Set<string>) {
+  constructor(data: Record<string, unknown> = {}) {
     super();
     // Копируем все поля из data в this, как в Python версии
     Object.assign(this, data);
   }
 
-  toObject(): Record<string, any> {
-    const result: Record<string, any> = {};
+  toObject(): Record<string, unknown> {
+    const result: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(this)) {
       // Исключаем служебные поля
       if (key !== 'constructor' && typeof value !== 'function' && !key.startsWith('_')) {
@@ -88,15 +88,15 @@ export class VerifiedPayloadBaseModel extends PayloadBaseModel {
 export class UnverifiedPayloadBaseModel extends PayloadBaseModel {
   private _fieldsSet?: Set<string>;
 
-  constructor(data: Record<string, any> = {}, fieldsSet?: Set<string>) {
+  constructor(data: Record<string, unknown> = {}, fieldsSet?: Set<string>) {
     super();
     // Копируем все поля из data в this, как в Python версии
     Object.assign(this, data);
     this._fieldsSet = fieldsSet;
   }
 
-  toObject(): Record<string, any> {
-    const result: Record<string, any> = {};
+  toObject(): Record<string, unknown> {
+    const result: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(this)) {
       // Исключаем служебные поля
       if (key !== 'constructor' && typeof value !== 'function' && !key.startsWith('_')) {

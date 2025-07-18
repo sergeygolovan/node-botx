@@ -2,7 +2,7 @@ import { BotAccount, Chat, APIChatTypes, APIUserKinds, BotAPISystemEventTypes, U
 
 export class ChatCreatedMember {
   constructor(
-    public isAdmin: boolean,
+    public is_admin: boolean,
     public huid: string,
     public username: string | null,
     public kind: UserKinds
@@ -12,9 +12,9 @@ export class ChatCreatedMember {
 export class ChatCreatedEvent {
   constructor(
     public chat: Chat,
-    public syncId: string,
-    public chatName: string,
-    public creatorId: string,
+    public sync_id: string,
+    public chat_name: string,
+    public creator_id: string,
     public members: ChatCreatedMember[],
     public bot: BotAccount,
     public rawCommand: Record<string, any>
@@ -23,18 +23,18 @@ export class ChatCreatedEvent {
 
 export class BotAPIChatMember {
   constructor(
-    public admin: boolean,
+    public is_admin: boolean,
     public huid: string,
     public name: string | null,
-    public userKind: APIUserKinds
+    public user_kind: APIUserKinds
   ) {}
 }
 
 export class BotAPIChatCreatedData {
   constructor(
-    public chatType: APIChatTypes,
+    public chat_type: APIChatTypes,
     public creator: string,
-    public groupChatId: string,
+    public group_chat_id: string,
     public members: BotAPIChatMember[],
     public name: string
   ) {}
@@ -49,32 +49,32 @@ export class BotAPIChatCreatedPayload {
 
 export class BotAPIChatCreated {
   constructor(
-    public syncId: string,
-    public botId: string,
+    public sync_id: string,
+    public bot_id: string,
     public payload: BotAPIChatCreatedPayload,
-    public sender: { groupChatId: string; chatType: string; host?: string }
+    public sender: { group_chat_id: string; chat_type: string; host?: string }
   ) {}
 
   toDomain(rawCommand: Record<string, any>): ChatCreatedEvent {
     const members = this.payload.data.members.map(
       (member) => new ChatCreatedMember(
-        member.admin,
+        member.is_admin,
         member.huid,
         member.name ?? null,
-        convertUserKindToDomain(member.userKind)
+        convertUserKindToDomain(member.user_kind)
       )
     );
     const chat = new Chat(
-      this.payload.data.groupChatId,
-      convertChatTypeToDomain(this.payload.data.chatType)
+      this.payload.data.group_chat_id,
+      convertChatTypeToDomain(this.payload.data.chat_type)
     );
     return new ChatCreatedEvent(
       chat,
-      this.syncId,
+      this.sync_id,
       this.payload.data.name,
       this.payload.data.creator,
       members,
-      new BotAccount(this.botId, this.sender.host),
+      new BotAccount(this.bot_id, this.sender.host),
       rawCommand
     );
   }

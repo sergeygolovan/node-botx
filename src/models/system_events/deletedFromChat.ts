@@ -11,33 +11,33 @@ export class DeletedFromChatEvent {
 
 export class BotAPIDeletedFromChatData {
   constructor(
-    public deletedMembers: string[]
+    public deleted_members: string[]
   ) {}
 }
 
 export class BotAPIDeletedFromChatPayload {
   constructor(
     public body: BotAPISystemEventTypes,
-    public commandType: BotAPICommandTypes,
+    public command_type: BotAPICommandTypes,
     public data: BotAPIDeletedFromChatData
   ) {}
 }
 
 export class BotAPIDeletedFromChat {
   constructor(
-    public botId: string,
+    public bot_id: string,
     public payload: BotAPIDeletedFromChatPayload,
-    public sender: { groupChatId: string; chatType: string; host?: string }
+    public sender: { group_chat_id: string; chat_type: string; host?: string }
   ) {}
 
   toDomain(rawCommand: Record<string, any>): DeletedFromChatEvent {
     return new DeletedFromChatEvent(
-      new BotAccount(this.botId, this.sender.host),
+      new BotAccount(this.bot_id, this.sender.host),
       rawCommand,
-      this.payload.data.deletedMembers,
+      this.payload.data.deleted_members,
       new Chat(
-        this.sender.groupChatId,
-        convertChatTypeToDomain(this.sender.chatType)
+        this.sender.group_chat_id,
+        convertChatTypeToDomain(this.sender.chat_type)
       )
     );
   }

@@ -108,15 +108,15 @@ export class MentionList extends Array<Mention> {
 
 export class BotAPINestedPersonalMentionData {
     constructor(
-        public userHuid: string,
+        public user_huid: string,
         public name: string,
-        public connType: string
+        public conn_type: string
     ) {}
 }
 
 export class BotAPINestedGroupMentionData {
     constructor(
-        public groupChatId: string,
+        public group_chat_id: string,
         public name: string
     ) {}
 }
@@ -127,9 +127,9 @@ export type BotAPINestedMentionData =
 
 export class BotAPIMentionData {
     constructor(
-        public mentionType: string,
-        public mentionId: string,
-        public mentionData?: BotAPINestedMentionData
+        public mention_type: string,
+        public mention_id: string,
+        public mention_data?: BotAPINestedMentionData
     ) {}
 }
 

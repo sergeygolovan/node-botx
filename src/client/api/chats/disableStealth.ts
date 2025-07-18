@@ -28,7 +28,7 @@ export class DisableStealthMethod extends AuthorizedBotXMethod {
       ...this.statusHandlers,
       403: responseExceptionThrower(PermissionDeniedError),
       404: responseExceptionThrower(ChatNotFoundError),
-    } as any;
+    };
   }
 
   async execute(payload: BotXAPIDisableStealthRequestPayload): Promise<void> {

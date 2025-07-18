@@ -56,7 +56,7 @@ export class AxiosHttpClient implements HttpClient {
     });
     
     return {
-      data: response.data as any,
+      data: response.data,
       status: response.status,
       statusText: response.statusText,
       headers: response.headers as Record<string, string>,

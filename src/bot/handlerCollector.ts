@@ -1,21 +1,9 @@
 import { Bot } from './bot';
-import { BotCommand, IncomingMessage, SystemEvent } from '../models';
-import { 
-  CommandHandler, 
-  DefaultMessageHandler, 
-  HandlerFunc, 
-  IncomingMessageHandlerFunc, 
-  Middleware, 
-  SyncSmartAppEventHandlerFunc, 
-  SystemEventHandlerFunc, 
-  VisibleFunc,
-  HiddenCommandHandler,
-  VisibleCommandHandler
-} from './handler';
-import { ExceptionHandlersDict, ExceptionMiddleware } from './middlewares/exceptionMiddleware';
-import { BotAPISyncSmartAppEventResponse } from '../models/syncSmartappEvent';
+import { BotCommand } from '../models/commands';
+import { StatusRecipient } from '../models/status';
+import { BotMenu } from '../models/status';
+import { IncomingMessage } from '../models/message/incomingMessage';
 import { SmartAppEvent } from '../models/system_events/smartappEvent';
-import { StatusRecipient, BotMenu } from '../models/status';
 import { AddedToChatEvent } from '../models/system_events/addedToChat';
 import { ChatCreatedEvent } from '../models/system_events/chatCreated';
 import { ChatDeletedByUserEvent } from '../models/system_events/chatDeletedByUser';
@@ -29,8 +17,22 @@ import { JoinToChatEvent } from '../models/system_events/userJoinedToChat';
 import { ConferenceChangedEvent } from '../models/system_events/conferenceChanged';
 import { ConferenceCreatedEvent } from '../models/system_events/conferenceCreated';
 import { ConferenceDeletedEvent } from '../models/system_events/conferenceDeleted';
-import { botIdVar, chatIdVar, botVar } from './contextVars';
-import { logger } from '../logger';
+import { BotAPISyncSmartAppEventResponse } from '../models/syncSmartappEvent';
+import {
+  HandlerFunc,
+  BaseSystemEventHandlerFunc,
+  SyncSmartAppEventHandlerFunc,
+  IncomingMessageHandlerFunc,
+  VisibleFunc,
+  Middleware,
+  CommandHandler,
+  DefaultMessageHandler,
+  HiddenCommandHandler,
+  VisibleCommandHandler,
+} from './handler';
+import { ExceptionMiddleware, ExceptionHandlersDict } from './middlewares/exceptionMiddleware';
+import { botVar, botIdVar, chatIdVar } from './contextVars';
+import { logger } from '@logger';
 
 export type MessageHandlerDecorator = (handlerFunc: IncomingMessageHandlerFunc) => IncomingMessageHandlerFunc;
 
@@ -39,7 +41,7 @@ export class HandlerCollector {
 
   private userCommandsHandlers: Map<string, CommandHandler> = new Map();
   private _defaultMessageHandler?: DefaultMessageHandler;
-  private systemEventsHandlers: Map<new (...args: any[]) => BotCommand, SystemEventHandlerFunc> = new Map();
+  private systemEventsHandlers: Map<new (...args: any[]) => BotCommand, BaseSystemEventHandlerFunc> = new Map();
   private syncSmartappEventHandler: Map<new (...args: any[]) => SmartAppEvent, SyncSmartAppEventHandlerFunc> = new Map();
   private middlewares: Middleware[] = [];
   private tasks: Set<Promise<void>> = new Set();
@@ -81,7 +83,7 @@ export class HandlerCollector {
       const eventHandler = this.getSystemEventHandlerOrNone(botCommand);
       if (eventHandler) {
         this.fillContextVars(botCommand, bot);
-        await eventHandler(botCommand as any, bot);
+        await eventHandler(botCommand, bot);
       }
     } else {
       throw new Error(`Unsupported event type: ${botCommand}`);
@@ -107,7 +109,7 @@ export class HandlerCollector {
 
     for (const [commandName, handler] of this.userCommandsHandlers) {
       if (handler.visible === true || (
-        typeof handler.visible === 'function' && 
+        typeof handler.visible === 'function' &&
         await handler.visible(statusRecipient, bot)
       )) {
         if ('description' in handler) {
@@ -155,7 +157,7 @@ export class HandlerCollector {
     const decorator = (handlerFunc: IncomingMessageHandlerFunc): IncomingMessageHandlerFunc => {
       const middlewares = options?.middlewares || [];
       const allMiddlewares = [...this.middlewares, ...middlewares];
-      
+
       this._defaultMessageHandler = new DefaultMessageHandler(handlerFunc, allMiddlewares);
       return handlerFunc;
     };
@@ -343,11 +345,11 @@ export class HandlerCollector {
     return undefined;
   }
 
-  private getSystemEventHandlerOrNone(event: BotCommand): SystemEventHandlerFunc | undefined {
+  private getSystemEventHandlerOrNone(event: BotCommand): BaseSystemEventHandlerFunc | undefined {
     const eventCls = event.constructor as new (...args: any[]) => BotCommand;
     const handler = this.systemEventsHandlers.get(eventCls);
     this.logSystemEventHandlerCall(eventCls.name, handler);
-    return handler;
+    return handler as BaseSystemEventHandlerFunc | undefined;
   }
 
   private getSyncSmartappEventHandlerOrNone(event: SmartAppEvent): SyncSmartAppEventHandlerFunc | undefined {
@@ -387,7 +389,7 @@ export class HandlerCollector {
     return new HiddenCommandHandler(handlerFunc, middlewares);
   }
 
-  private systemEvent<T extends SystemEvent>(
+  private systemEvent<T extends BotCommand>(
     eventClsName: new (...args: any[]) => T,
     handlerFunc: HandlerFunc<T>
   ): HandlerFunc<T> {
@@ -395,21 +397,21 @@ export class HandlerCollector {
       throw new Error(`Handler for ${eventClsName.name} already registered`);
     }
 
-    this.systemEventsHandlers.set(eventClsName as new (...args: any[]) => BotCommand, handlerFunc as SystemEventHandlerFunc);
+    this.systemEventsHandlers.set(eventClsName as new (...args: any[]) => BotCommand, handlerFunc as BaseSystemEventHandlerFunc);
     return handlerFunc;
   }
 
   private fillContextVars(botCommand: BotCommand, bot: Bot): void {
     botVar.set(bot);
-    
+
     if (botCommand instanceof IncomingMessage) {
       botIdVar.set(botCommand.bot.id);
       chatIdVar.set(botCommand.chat.id);
     } else {
       // For system events, try to get bot.id and chat.id
-      const botId = (botCommand as any).bot?.id || '';
+      const botId = botCommand.bot?.id || '';
       botIdVar.set(botId);
-      
+
       const chat = (botCommand as any).chat;
       if (chat) {
         chatIdVar.set(chat.id);
@@ -441,7 +443,7 @@ export class HandlerCollector {
       EventEdit, JoinToChatEvent, ConferenceChangedEvent, ConferenceCreatedEvent,
       ConferenceDeletedEvent, SmartAppEvent
     ];
-    
+
     return systemEventTypes.some(type => command instanceof type);
   }
 } 

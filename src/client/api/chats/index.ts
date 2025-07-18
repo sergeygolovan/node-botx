@@ -13,7 +13,7 @@ export { DisableStealthMethod } from "./disableStealth";
 // Payload classes
 export { BotXAPICreateChatRequestPayload, BotXAPICreateChatResponsePayload } from "./createChat";
 export { BotXAPIChatInfoRequestPayload, BotXAPIChatInfoResponsePayload } from "./chatInfo";
-export { BotXAPIChatsListResponsePayload } from "./listChats";
+export { BotXAPIListChatResponsePayload } from "./listChats";
 export { BotXAPIAddUserRequestPayload, BotXAPIAddUserResponsePayload } from "./addUser";
 export { BotXAPIAddAdminRequestPayload, BotXAPIAddAdminResponsePayload } from "./addAdmin";
 export { BotXAPIRemoveUserRequestPayload, BotXAPIRemoveUserResponsePayload } from "./removeUser";

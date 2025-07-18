@@ -18,4 +18,19 @@ export class OutgoingMessage {
     public sendPush: Missing<boolean> = Undefined,
     public ignoreMute: Missing<boolean> = Undefined
   ) {}
+}
+
+export interface AnswerMessageOptions {
+  metadata: Missing<Record<string, unknown>>;
+  bubbles: Missing<BubbleMarkup>;
+  keyboard: Missing<KeyboardMarkup>;
+  file: Missing<IncomingFileAttachment | OutgoingAttachment>;
+  recipients: Missing<string[]>; // UUID[]
+  silentResponse: Missing<boolean>;
+  markupAutoAdjust: Missing<boolean>;
+  stealthMode: Missing<boolean>;
+  sendPush: Missing<boolean>;
+  ignoreMute: Missing<boolean>;
+  waitCallback: Missing<boolean>;
+  callbackTimeout: Missing<number>;
 } 

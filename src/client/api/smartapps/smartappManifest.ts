@@ -1,6 +1,7 @@
-import { AuthorizedBotXMethod } from "../../authorizedBotxMethod";
-import { HttpClient } from "../../httpClient";
-import { BotAccountsStorage } from "../../../bot/botAccountsStorage";
+import { AuthorizedBotXMethod, HttpClient } from "@client";
+import { BotAccountsStorage } from "@bot";
+import { UnverifiedPayloadBaseModel, VerifiedPayloadBaseModel } from "@models";
+import { Missing, Undefined } from "@missing";
 
 // Enums
 export enum WebLayoutChoices {
@@ -9,53 +10,76 @@ export enum WebLayoutChoices {
   full = "full"
 }
 
-export interface SmartappManifestIosParams {
-  fullscreenLayout: boolean;
+export class SmartappManifestIosParams extends VerifiedPayloadBaseModel {
+  fullscreen_layout: boolean = false;
 }
 
-export interface SmartappManifestAndroidParams {
-  fullscreenLayout: boolean;
+export class SmartappManifestAndroidParams extends VerifiedPayloadBaseModel {
+  fullscreen_layout: boolean = false;
 }
 
-export interface SmartappManifestAuroraParams {
-  fullscreenLayout: boolean;
+export class SmartappManifestAuroraParams extends VerifiedPayloadBaseModel {
+  fullscreen_layout: boolean = false;
 }
 
-export interface SmartappManifestWebParams {
-  defaultLayout: WebLayoutChoices;
-  expandedLayout: WebLayoutChoices;
-  alwaysPinned: boolean;
+export class SmartappManifestWebParams extends VerifiedPayloadBaseModel {
+  default_layout: WebLayoutChoices = WebLayoutChoices.minimal;
+  expanded_layout: WebLayoutChoices = WebLayoutChoices.half;
+  always_pinned: boolean = false;
 }
 
-export interface SmartappManifestUnreadCounterParams {
-  userHuid: string[];
-  groupChatId: string[];
-  appId: string[];
+export class SmartappManifestUnreadCounterParams extends VerifiedPayloadBaseModel {
+  user_huid: string[] = [];
+  group_chat_id: string[] = [];
+  app_id: string[] = [];
 }
 
-export interface SmartappManifest {
-  ios: SmartappManifestIosParams;
-  android: SmartappManifestAndroidParams;
-  web: SmartappManifestWebParams;
-  unreadCounterLink: SmartappManifestUnreadCounterParams;
+export class SmartappManifest extends VerifiedPayloadBaseModel {
+  ios!: SmartappManifestIosParams;
+  android!: SmartappManifestAndroidParams;
+  web!: SmartappManifestWebParams;
+  unread_counter_link!: SmartappManifestUnreadCounterParams;
 }
 
-export interface SmartappManifestPayload {
-  ios?: SmartappManifestIosParams;
-  android?: SmartappManifestAndroidParams;
-  web?: SmartappManifestWebParams;
-  aurora?: SmartappManifestAuroraParams;
-  unreadCounterLink?: SmartappManifestUnreadCounterParams;
+export class SmartappManifestPayload extends UnverifiedPayloadBaseModel {
+  ios!: Missing<SmartappManifestIosParams>;
+  android!: Missing<SmartappManifestAndroidParams>;
+  web!: Missing<SmartappManifestWebParams>;
+  aurora!: Missing<SmartappManifestAuroraParams>;
+  unread_counter_link!: Missing<SmartappManifestUnreadCounterParams>;
 }
 
-export interface BotXAPISmartAppManifestRequestPayload {
-  manifest: SmartappManifestPayload;
+export class BotXAPISmartAppManifestRequestPayload extends UnverifiedPayloadBaseModel {
+  manifest!: SmartappManifestPayload;
+
+  static fromDomain(
+    ios: Missing<SmartappManifestIosParams> = Undefined,
+    android: Missing<SmartappManifestAndroidParams> = Undefined,
+    web_layout: Missing<SmartappManifestWebParams> = Undefined,
+    unread_counter: Missing<SmartappManifestUnreadCounterParams> = Undefined
+  ): BotXAPISmartAppManifestRequestPayload {
+    if (web_layout === Undefined && unread_counter === Undefined) {
+      return new BotXAPISmartAppManifestRequestPayload({ manifest: {} });
+    }
+
+    return new BotXAPISmartAppManifestRequestPayload({
+      manifest: new SmartappManifestPayload({
+        ios,
+        android,
+        web: web_layout,
+        unread_counter_link: unread_counter,
+      }),
+    });
+  }
 }
 
-export interface BotXAPISmartAppManifestResponsePayload {
-  status: "ok";
-  result: SmartappManifest;
-  toDomain(): SmartappManifest;
+export class BotXAPISmartAppManifestResponsePayload extends VerifiedPayloadBaseModel {
+  status!: "ok";
+  result!: SmartappManifest;
+
+  toDomain(): SmartappManifest {
+    return this.result;
+  }
 }
 
 export class SmartAppManifestMethod extends AuthorizedBotXMethod {
@@ -73,17 +97,12 @@ export class SmartAppManifestMethod extends AuthorizedBotXMethod {
     const response = await this.botxMethodCall(
       "POST",
       this.buildUrl(path),
-      { json: payload }
+      { json: payload.jsonableDict() }
     );
 
-    const responseData = await response.json();
-    const result: BotXAPISmartAppManifestResponsePayload = {
-      status: responseData.status,
-      result: responseData.result,
-      toDomain() {
-        return this.result;
-      }
-    };
-    return result;
+    return this.verifyAndExtractApiModel(
+      BotXAPISmartAppManifestResponsePayload,
+      response
+    );
   }
 } 

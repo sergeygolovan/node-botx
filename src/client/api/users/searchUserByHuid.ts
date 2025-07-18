@@ -7,9 +7,9 @@ import { UserNotFoundError } from "@client/exceptions/users";
 export class BotXAPISearchUserByHUIDRequestPayload extends UnverifiedPayloadBaseModel {
   user_huid!: string;
 
-  static fromDomain(userHuid: string): BotXAPISearchUserByHUIDRequestPayload {
+  static fromDomain(user_huid: string): BotXAPISearchUserByHUIDRequestPayload {
     return new BotXAPISearchUserByHUIDRequestPayload({
-      user_huid: userHuid,
+      user_huid,
     });
   }
 }
@@ -20,9 +20,9 @@ export class BotXAPISearchUserResponsePayload extends VerifiedPayloadBaseModel {
 
   toDomain(): UserFromSearch {
     return new UserFromSearch(
-      this.result.userHuid,
-      this.result.adLogin || null,
-      this.result.adDomain || null,
+      this.result.user_huid,
+      this.result.ad_login || null,
+      this.result.ad_domain || null,
       this.result.name,
       this.result.company || null,
       this.result.companyPosition || null,
@@ -56,7 +56,7 @@ export class SearchUserByHUIDMethod extends AuthorizedBotXMethod {
     this.statusHandlers = {
       ...this.statusHandlers,
       404: responseExceptionThrower(UserNotFoundError),
-    } as any;
+    };
   }
 
   async execute(payload: BotXAPISearchUserByHUIDRequestPayload): Promise<BotXAPISearchUserResponsePayload> {

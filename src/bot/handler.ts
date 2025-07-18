@@ -45,6 +45,9 @@ export type SystemEventHandlerFunc =
   | HandlerFunc<ConferenceCreatedEvent>
   | HandlerFunc<ConferenceDeletedEvent>;
 
+// Базовый тип для всех системных обработчиков событий
+export type BaseSystemEventHandlerFunc = (event: BotCommand, bot: Bot) => Promise<void>;
+
 export type VisibleFunc = (recipient: StatusRecipient, bot: Bot) => Promise<boolean>;
 
 export type Middleware = (

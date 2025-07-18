@@ -10,6 +10,8 @@ import type { BotCommandBase } from "../baseCommand";
 import { BotAPIForward } from "./forward";
 import { BotAPIReply } from "./reply";
 import { Sticker } from "../stickers";
+import { IsString, IsBoolean, IsOptional, IsEnum, ValidateNested, IsUUID } from "class-validator";
+import { Type } from "class-transformer";
 
 // Контекст входящего сообщения (объединяет user, chat, device)
 export interface BotAPIIncomingMessageContext extends BotAPIUserContextModel, BotAPIChatContextModel, BotAPIDeviceContextModel {}
@@ -19,71 +21,162 @@ export type BotAPIEntity = BotAPIMention | BotAPIForward | BotAPIReply;
 export type Entity = Mention | Forward | Reply;
 
 export class UserDevice {
+  @IsOptional()
+  @IsString()
+  manufacturer?: string | null;
+
+  @IsOptional()
+  @IsString()
+  deviceName?: string | null;
+
+  @IsOptional()
+  @IsString()
+  os?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  pushes?: boolean | null;
+
+  @IsOptional()
+  @IsString()
+  timezone?: string | null;
+
+  @IsOptional()
+  permissions?: Record<string, any> | null;
+
+  @IsOptional()
+  @IsEnum(ClientPlatforms)
+  platform?: ClientPlatforms | null;
+
+  @IsOptional()
+  @IsString()
+  platform_package_id?: string | null;
+
+  @IsOptional()
+  @IsString()
+  app_version?: string | null;
+
+  @IsOptional()
+  @IsString()
+  locale?: string | null;
+
   constructor(
-    public manufacturer?: string | null,
-    public deviceName?: string | null,
-    public os?: string | null,
-    public pushes?: boolean | null,
-    public timezone?: string | null,
-    public permissions?: Record<string, any> | null,
-    public platform?: ClientPlatforms | null,
-    public platformPackageId?: string | null,
-    public appVersion?: string | null,
-    public locale?: string | null
-  ) {}
+    manufacturer?: string | null,
+    deviceName?: string | null,
+    os?: string | null,
+    pushes?: boolean | null,
+    timezone?: string | null,
+    permissions?: Record<string, any> | null,
+    platform?: ClientPlatforms | null,
+    platformPackageId?: string | null,
+    appVersion?: string | null,
+    locale?: string | null
+  ) {
+    this.manufacturer = manufacturer;
+    this.deviceName = deviceName;
+    this.os = os;
+    this.pushes = pushes;
+    this.timezone = timezone;
+    this.permissions = permissions;
+    this.platform = platform;
+    this.platform_package_id = platformPackageId;
+    this.app_version = appVersion;
+    this.locale = locale;
+  }
 }
 
 export class UserSender {
+  @IsUUID()
+  huid: string; // UUID как строка
+
+  @IsOptional()
+  @IsUUID()
+  udid?: string | null; // UUID как строка
+
+  @IsOptional()
+  @IsString()
+  ad_login?: string | null;
+
+  @IsOptional()
+  @IsString()
+  ad_domain?: string | null;
+
+  @IsOptional()
+  @IsString()
+  username?: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  isChatAdmin?: boolean | null;
+
+  @IsOptional()
+  @IsBoolean()
+  isChatCreator?: boolean | null;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => UserDevice)
+  device?: UserDevice | null;
+
   constructor(
-    public huid: string,
-    public udid?: string | null,
-    public adLogin?: string | null,
-    public adDomain?: string | null,
-    public username?: string | null,
-    public isChatAdmin?: boolean | null,
-    public isChatCreator?: boolean | null,
-    public device?: UserDevice | null
-  ) {}
+    huid: string,
+    udid?: string | null,
+    adLogin?: string | null,
+    adDomain?: string | null,
+    username?: string | null,
+    isChatAdmin?: boolean | null,
+    isChatCreator?: boolean | null,
+    device?: UserDevice | null
+  ) {
+    this.huid = huid;
+    this.udid = udid;
+    this.ad_login = adLogin;
+    this.ad_domain = adDomain;
+    this.username = username;
+    this.isChatAdmin = isChatAdmin;
+    this.isChatCreator = isChatCreator;
+    this.device = device;
+  }
 
   get upn(): string | null {
     // https://docs.microsoft.com/en-us/windows/win32/secauthn/user-name-formats
-    if (!(this.adLogin && this.adDomain)) {
+    if (!(this.ad_login && this.ad_domain)) {
       return null;
     }
 
-    return `${this.adLogin}@${this.adDomain}`;
+    return `${this.ad_login}@${this.ad_domain}`;
   }
 }
 
 function convertBotApiMentionToDomain(apiMentionData: BotAPIMentionData): Mention {
-    const mentionData = apiMentionData.mentionData as BotAPINestedMentionData;
+    const mentionData = apiMentionData.mention_data as BotAPINestedMentionData;
 
-    switch (apiMentionData.mentionType) {
+    switch (apiMentionData.mention_type) {
         case BotAPIMentionTypes.USER:
             return MentionBuilder.user(
-                (mentionData as BotAPINestedPersonalMentionData).userHuid,
+                (mentionData as BotAPINestedPersonalMentionData).user_huid,
                 mentionData.name,
             );
         case BotAPIMentionTypes.CHAT:
             return MentionBuilder.chat(
-                (mentionData as BotAPINestedGroupMentionData).groupChatId,
+                (mentionData as BotAPINestedGroupMentionData).group_chat_id,
                 mentionData.name,
             );
         case BotAPIMentionTypes.CONTACT:
             // Assuming entityId is in mentionId for contacts
             return MentionBuilder.contact(
-                apiMentionData.mentionId,
+                apiMentionData.mention_id,
                 mentionData.name,
             );
         case BotAPIMentionTypes.CHANNEL:
             return MentionBuilder.channel(
-                (mentionData as BotAPINestedGroupMentionData).groupChatId,
+                (mentionData as BotAPINestedGroupMentionData).group_chat_id,
                 mentionData.name,
             );
         case BotAPIMentionTypes.ALL:
             return MentionBuilder.all();
         default:
-            throw new Error(`Unsupported mention type: ${apiMentionData.mentionType}`);
+            throw new Error(`Unsupported mention type: ${apiMentionData.mention_type}`);
     }
 }
 
@@ -119,25 +212,102 @@ export function convertBotApiEntityToDomain(apiEntity: BotAPIEntity): Entity {
 
 export class IncomingMessage implements BotCommandBase {
   public state: Record<string, any> = {};
+
+  @ValidateNested()
+  @Type(() => BotAccount)
+  bot: BotAccount;
+
+  @IsUUID()
+  syncId: string; // UUID как строка
+
+  @IsOptional()
+  @IsUUID()
+  sourceSyncId: string | undefined; // UUID как строка
+
+  @IsString()
+  body: string;
+
+  data: Record<string, any>;
+
+  metadata: Record<string, any>;
+
+  @ValidateNested()
+  @Type(() => UserSender)
+  sender: UserSender;
+
+  @ValidateNested()
+  @Type(() => Chat)
+  chat: Chat;
+
+  @IsOptional()
+  rawCommand: Record<string, any> | undefined;
+
+  @IsOptional()
+  file: IncomingFileAttachment | null;
+
+  @IsOptional()
+  location: Location | null;
+
+  @IsOptional()
+  contact: Contact | null;
+
+  @IsOptional()
+  link: Link | null;
+
+  @IsOptional()
+  sticker: Sticker | null;
+
+  @ValidateNested()
+  @Type(() => MentionList)
+  mentions: MentionList;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => Forward)
+  forward: Forward | null;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => Reply)
+  reply: Reply | null;
+
   constructor(
-    public bot: BotAccount,
-    public syncId: string,
-    public sourceSyncId: string | undefined,
-    public body: string,
-    public data: Record<string, any>,
-    public metadata: Record<string, any>,
-    public sender: UserSender,
-    public chat: Chat,
-    public rawCommand: Record<string, any> | undefined,
-    public file: IncomingFileAttachment | null,
-    public location: any,
-    public contact: any,
-    public link: any,
-    public sticker: any,
-    public mentions: MentionList,
-    public forward: Forward | null,
-    public reply: Reply | null
-  ) {}
+    bot: BotAccount,
+    syncId: string,
+    sourceSyncId: string | undefined,
+    body: string,
+    data: Record<string, any>,
+    metadata: Record<string, any>,
+    sender: UserSender,
+    chat: Chat,
+    rawCommand: Record<string, any> | undefined,
+    file: IncomingFileAttachment | null,
+    location: Location | null,
+    contact: Contact | null,
+    link: Link | null,
+    sticker: Sticker | null,
+    mentions: MentionList,
+    forward: Forward | null,
+    reply: Reply | null
+  ) {
+    this.bot = bot;
+    this.syncId = syncId;
+    this.sourceSyncId = sourceSyncId;
+    this.body = body;
+    this.data = data;
+    this.metadata = metadata;
+    this.sender = sender;
+    this.chat = chat;
+    this.rawCommand = rawCommand;
+    this.file = file;
+    this.location = location;
+    this.contact = contact;
+    this.link = link;
+    this.sticker = sticker;
+    this.mentions = mentions;
+    this.forward = forward;
+    this.reply = reply;
+  }
 
   get argument(): string {
     const splitBody = this.body.split(" ");
@@ -149,24 +319,39 @@ export class IncomingMessage implements BotCommandBase {
   get arguments(): string[] {
     return this.argument.split(" ").map(arg => arg.trim()).filter(Boolean);
   }
-
-  static fromAPI(apiMessage: BotAPIIncomingMessage): IncomingMessage {
-    return apiMessage.toDomain(apiMessage as any);
-  }
 }
 
 export class BotAPIIncomingMessage extends BotAPIBaseCommandModel {
+  @ValidateNested()
+  @Type(() => BotAPICommandPayloadModel)
+  payload: BotAPICommandPayloadModel;
+
+  sender: BotAPIIncomingMessageContext;
+
+  @IsOptional()
+  @IsString()
+  sourceSyncId?: string;
+
+  attachments: (BotAPIAttachment | Record<string, any>)[] = [];
+
+  entities: (BotAPIEntity | Record<string, any>)[] = [];
+
   constructor(
     bot_id: string,
     sync_id: string,
     proto_version: number,
-    public payload: BotAPICommandPayloadModel,
-    public sender: BotAPIIncomingMessageContext,
-    public sourceSyncId?: string,
-    public attachments: (BotAPIAttachment | Record<string, any>)[] = [],
-    public entities: (BotAPIEntity | Record<string, any>)[] = []
+    payload: BotAPICommandPayloadModel,
+    sender: BotAPIIncomingMessageContext,
+    sourceSyncId?: string,
+    attachments: (BotAPIAttachment | Record<string, any>)[] = [],
+    entities: (BotAPIEntity | Record<string, any>)[] = []
   ) {
     super(bot_id, sync_id, proto_version);
+    this.payload = payload;
+    this.sender = sender;
+    this.sourceSyncId = sourceSyncId;
+    this.attachments = attachments;
+    this.entities = entities;
   }
 
   toDomain(rawCommand: Record<string, any>): IncomingMessage {

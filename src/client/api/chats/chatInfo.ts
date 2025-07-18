@@ -29,11 +29,11 @@ export class BotXAPIChatInfoMember extends VerifiedPayloadBaseModel {
   user_huid: string;
   user_kind: APIUserKinds;
 
-  constructor(admin: boolean, userHuid: string, userKind: APIUserKinds) {
+  constructor(admin: boolean, user_huid: string, user_kind: APIUserKinds) {
     super();
     this.admin = admin;
-    this.user_huid = userHuid;
-    this.user_kind = userKind;
+    this.user_huid = user_huid;
+    this.user_kind = user_kind;
   }
 
   toObject(): Record<string, any> {
@@ -48,8 +48,8 @@ export class BotXAPIChatInfoMember extends VerifiedPayloadBaseModel {
 export class BotXAPIChatInfoResult extends VerifiedPayloadBaseModel {
   constructor(
     public chat_type: APIChatTypes,
-    public creator: string | undefined = undefined,
-    public description: string | undefined = undefined,
+    public creator: string | null = null,
+    public description: string | null = null,
     public group_chat_id: string,
     public inserted_at: string,
     public members: BotXAPIChatInfoMember[],
@@ -128,7 +128,7 @@ export class ChatInfoMethod extends AuthorizedBotXMethod {
     botAccountsStorage: BotAccountsStorage
   ) {
     super(senderBotId, httpClient, botAccountsStorage);
-    (this.statusHandlers as any) = {
+    this.statusHandlers = {
       ...this.statusHandlers,
       404: responseExceptionThrower(ChatNotFoundError),
     };

@@ -1,5 +1,7 @@
 import { Missing, Undefined } from "@missing";
 import { UnverifiedPayloadBaseModel } from "@models";
+import { IsString, IsBoolean, IsNumber, IsOptional, IsEnum, ValidateNested, IsArray } from "class-validator";
+import { Type } from "class-transformer";
 
 enum ButtonTextAlign {
   LEFT = "left",
@@ -8,19 +10,56 @@ enum ButtonTextAlign {
 }
 
 class Button {
+  @IsString()
+  label: string;
+
+  command: Missing<string>;
+
+  data: Record<string, any>;
+
+  textColor: Missing<string>;
+
+  backgroundColor: Missing<string>;
+
+  @IsEnum(ButtonTextAlign)
+  align: ButtonTextAlign;
+
+  @IsBoolean()
+  silent: boolean;
+
+  widthRatio: Missing<number>;
+
+  alert: Missing<string>;
+
+  processOnClient: Missing<boolean>;
+
+  link: Missing<string>;
+
   constructor(
-    public label: string,
-    public command: Missing<string> = Undefined,
-    public data: Record<string, any> = {},
-    public textColor: Missing<string> = Undefined,
-    public backgroundColor: Missing<string> = Undefined,
-    public align: ButtonTextAlign = ButtonTextAlign.CENTER,
-    public silent: boolean = true,
-    public widthRatio: Missing<number> = Undefined,
-    public alert: Missing<string> = Undefined,
-    public processOnClient: Missing<boolean> = Undefined,
-    public link: Missing<string> = Undefined
+    label: string,
+    command: Missing<string> = Undefined,
+    data: Record<string, any> = {},
+    textColor: Missing<string> = Undefined,
+    backgroundColor: Missing<string> = Undefined,
+    align: ButtonTextAlign = ButtonTextAlign.CENTER,
+    silent: boolean = true,
+    widthRatio: Missing<number> = Undefined,
+    alert: Missing<string> = Undefined,
+    processOnClient: Missing<boolean> = Undefined,
+    link: Missing<string> = Undefined
   ) {
+    this.label = label;
+    this.command = command;
+    this.data = data;
+    this.textColor = textColor;
+    this.backgroundColor = backgroundColor;
+    this.align = align;
+    this.silent = silent;
+    this.widthRatio = widthRatio;
+    this.alert = alert;
+    this.processOnClient = processOnClient;
+    this.link = link;
+
     if (this.command === Undefined && this.link === Undefined) {
       throw new Error("Either 'command' or 'link' must be provided");
     }
@@ -40,7 +79,7 @@ class BaseMarkup {
     return this._buttons[Symbol.iterator]();
   }
 
-  equals(other: any): boolean {
+  equals(other: BaseMarkup): boolean {
     if (!(other instanceof BaseMarkup)) {
       throw new Error("Not implemented");
     }
@@ -77,7 +116,7 @@ class BaseMarkup {
   addButton(
     label: string,
     command: Missing<string> = Undefined,
-    data: { [key: string]: any } = {},
+    data: Record<string, unknown> = {},
     textColor: Missing<string> = Undefined,
     backgroundColor: Missing<string> = Undefined,
     align: ButtonTextAlign = ButtonTextAlign.CENTER,
@@ -111,6 +150,10 @@ class BaseMarkup {
   addRow(buttonRow: ButtonRow): void {
     this._buttons.push(buttonRow);
   }
+
+  get buttons(): ButtonRow[] {
+    return this._buttons;
+  }
 }
 
 class BubbleMarkup extends BaseMarkup {}
@@ -120,43 +163,103 @@ class KeyboardMarkup extends BaseMarkup {}
 type Markup = BubbleMarkup | KeyboardMarkup;
 
 class BotXAPIButtonOptions extends UnverifiedPayloadBaseModel {
+  @IsOptional()
+  @IsBoolean()
+  silent: Missing<boolean>;
+
+  @IsOptional()
+  @IsString()
+  font_color: Missing<string>;
+
+  @IsOptional()
+  @IsString()
+  background_color: Missing<string>;
+
+  @IsOptional()
+  @IsString()
+  align: Missing<string>;
+
+  @IsOptional()
+  @IsNumber()
+  h_size: Missing<number>;
+
+  @IsOptional()
+  @IsBoolean()
+  show_alert: Missing<boolean>;
+
+  @IsOptional()
+  @IsString()
+  alert_text: Missing<string>;
+
+  @IsOptional()
+  @IsString()
+  handler: Missing<string>;
+
+  @IsOptional()
+  @IsString()
+  link: Missing<string>;
+
   constructor(
     data: Record<string, any>,
-    public silent: Missing<boolean>,
-    public font_color: Missing<string>,
-    public background_color: Missing<string>,
-    public align: Missing<string>,
-    public h_size: Missing<number>,
-    public show_alert: Missing<boolean>,
-    public alert_text: Missing<string>,
-    public handler: Missing<string>,
-    public link: Missing<string>
+    silent: Missing<boolean>,
+    font_color: Missing<string>,
+    background_color: Missing<string>,
+    align: Missing<string>,
+    h_size: Missing<number>,
+    show_alert: Missing<boolean>,
+    alert_text: Missing<string>,
+    handler: Missing<string>,
+    link: Missing<string>
   ) {
     super(data);
+    this.silent = silent;
+    this.font_color = font_color;
+    this.background_color = background_color;
+    this.align = align;
+    this.h_size = h_size;
+    this.show_alert = show_alert;
+    this.alert_text = alert_text;
+    this.handler = handler;
+    this.link = link;
   }
 }
 
 class BotXAPIButton extends UnverifiedPayloadBaseModel {
+  @IsString()
+  command: string;
+
+  @IsString()
+  label: string;
+
+  data: Record<string, unknown>;
+
+  @ValidateNested()
+  @Type(() => BotXAPIButtonOptions)
+  opts: BotXAPIButtonOptions;
+
   constructor(
     command: string,
     label: string,
-    data: { [key: string]: any },
-    public opts: BotXAPIButtonOptions
+    data: Record<string, unknown>,
+    opts: BotXAPIButtonOptions
   ) {
     super({});
-    // Сохраняем значения как приватные свойства, если нужно
-    this._command = command;
-    this._label = label;
-    this._data = data;
+    this.command = command;
+    this.label = label;
+    this.data = data;
+    this.opts = opts;
   }
-  private _command: string;
-  private _label: string;
-  private _data: { [key: string]: any };
 }
 
 class BotXAPIMarkup extends UnverifiedPayloadBaseModel {
-  constructor(public __root__: BotXAPIButton[][]) {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => Array)
+  __root__: BotXAPIButton[][];
+
+  constructor(__root__: BotXAPIButton[][]) {
     super({});
+    this.__root__ = __root__;
   }
 }
 
@@ -194,4 +297,12 @@ function apiButtonFromDomain(button: Button): BotXAPIButton {
   );
 }
 
-export { BubbleMarkup, KeyboardMarkup };
+function apiMarkupFromDomain(markup: Markup): BotXAPIMarkup {
+  return new BotXAPIMarkup(
+    markup.buttons.map(buttons => 
+      buttons.map(button => apiButtonFromDomain(button))
+    )
+  );
+}
+
+export { BubbleMarkup, KeyboardMarkup, apiMarkupFromDomain };

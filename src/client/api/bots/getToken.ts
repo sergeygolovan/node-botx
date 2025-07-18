@@ -1,5 +1,4 @@
-import { BotXMethod, HttpClient, InvalidBotAccountError, responseExceptionThrower } from "@client";
-import { BotAccountsStorage } from "@bot";
+import { BotXMethod, InvalidBotAccountError, responseExceptionThrower } from "@client";
 import { UnverifiedPayloadBaseModel, VerifiedPayloadBaseModel } from "@models";
 
 export class BotXAPIGetTokenRequestPayload extends UnverifiedPayloadBaseModel {

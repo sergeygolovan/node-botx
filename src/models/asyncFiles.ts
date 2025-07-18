@@ -9,27 +9,27 @@ export abstract class AsyncFileBase {
   abstract type: AttachmentTypes;
   filename: string;
   size: number;
-  isAsyncFile: true = true;
+  is_async_file: true = true;
 
-  _fileId: string;
-  _fileUrl: string;
-  _fileMimeType: string;
-  _fileHash: string;
+  _file_id: string;
+  _file_url: string;
+  _file_mimetype: string;
+  _file_hash: string;
 
   constructor(
     filename: string,
     size: number,
-    fileId: string,
-    fileUrl: string,
-    fileMimeType: string,
-    fileHash: string
+    file_id: string,
+    file_url: string,
+    file_mimetype: string,
+    file_hash: string
   ) {
     this.filename = filename;
     this.size = size;
-    this._fileId = fileId;
-    this._fileUrl = fileUrl;
-    this._fileMimeType = fileMimeType;
-    this._fileHash = fileHash;
+    this._file_id = file_id;
+    this._file_url = file_url;
+    this._file_mimetype = file_mimetype;
+    this._file_hash = file_hash;
   }
 
   /**
@@ -48,12 +48,12 @@ export abstract class AsyncFileBase {
       if (!bot) {
         throw new Error("Bot not found in context");
       }
-      await bot.downloadFileToBuffer(
-        botIdVar.get() || "",
-        chatIdVar.get() || "",
-        this._fileId,
-        spooledBuffer
-      );
+      await bot.downloadFile({
+        botId: botIdVar.get() || "",
+        chatId: chatIdVar.get() || "",
+        fileId: this._file_id,
+        asyncBuffer: spooledBuffer
+      });
 
       // Перемещаемся в начало буфера для чтения
       await spooledBuffer.seek(0);
@@ -93,13 +93,13 @@ export class Video extends AsyncFileBase {
   constructor(
     filename: string,
     size: number,
-    fileId: string,
-    fileUrl: string,
-    fileMimeType: string,
-    fileHash: string,
+    file_id: string,
+    file_url: string,
+    file_mimetype: string,
+    file_hash: string,
     duration: number
   ) {
-    super(filename, size, fileId, fileUrl, fileMimeType, fileHash);
+    super(filename, size, file_id, file_url, file_mimetype, file_hash);
     this.duration = duration;
   }
 }
@@ -115,13 +115,13 @@ export class Voice extends AsyncFileBase {
   constructor(
     filename: string,
     size: number,
-    fileId: string,
-    fileUrl: string,
-    fileMimeType: string,
-    fileHash: string,
+    file_id: string,
+    file_url: string,
+    file_mimetype: string,
+    file_hash: string,
     duration: number
   ) {
-    super(filename, size, fileId, fileUrl, fileMimeType, fileHash);
+    super(filename, size, file_id, file_url, file_mimetype, file_hash);
     this.duration = duration;
   }
 }
@@ -172,10 +172,10 @@ export function convertAsyncFileFromDomain(file: File): APIAsyncFile {
         type: attachmentType,
         file_name: img.filename,
         file_size: img.size,
-        file_id: img._fileId,
-        file: img._fileUrl,
-        file_mime_type: img._fileMimeType,
-        file_hash: img._fileHash,
+        file_id: img._file_id,
+        file: img._file_url,
+        file_mime_type: img._file_mimetype,
+        file_hash: img._file_hash,
       } as ApiAsyncFileImage;
 
     case APIAttachmentTypes.VIDEO:
@@ -185,10 +185,10 @@ export function convertAsyncFileFromDomain(file: File): APIAsyncFile {
         file_name: vid.filename,
         file_size: vid.size,
         duration: vid.duration,
-        file_id: vid._fileId,
-        file: vid._fileUrl,
-        file_mime_type: vid._fileMimeType,
-        file_hash: vid._fileHash,
+        file_id: vid._file_id,
+        file: vid._file_url,
+        file_mime_type: vid._file_mimetype,
+        file_hash: vid._file_hash,
       } as ApiAsyncFileVideo;
 
     case APIAttachmentTypes.DOCUMENT:
@@ -197,10 +197,10 @@ export function convertAsyncFileFromDomain(file: File): APIAsyncFile {
         type: attachmentType,
         file_name: doc.filename,
         file_size: doc.size,
-        file_id: doc._fileId,
-        file: doc._fileUrl,
-        file_mime_type: doc._fileMimeType,
-        file_hash: doc._fileHash,
+        file_id: doc._file_id,
+        file: doc._file_url,
+        file_mime_type: doc._file_mimetype,
+        file_hash: doc._file_hash,
       } as ApiAsyncFileDocument;
 
     case APIAttachmentTypes.VOICE:
@@ -210,10 +210,10 @@ export function convertAsyncFileFromDomain(file: File): APIAsyncFile {
         file_name: voice.filename,
         file_size: voice.size,
         duration: voice.duration,
-        file_id: voice._fileId,
-        file: voice._fileUrl,
-        file_mime_type: voice._fileMimeType,
-        file_hash: voice._fileHash,
+        file_id: voice._file_id,
+        file: voice._file_url,
+        file_mime_type: voice._file_mimetype,
+        file_hash: voice._file_hash,
       } as ApiAsyncFileVoice;
 
     default:

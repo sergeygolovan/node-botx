@@ -23,7 +23,7 @@ export class BotAccountsStorage {
   }
 
   getCtsUrl(botId: string): string {
-    return this.getBotAccount(botId).ctsUrl;
+    return this.getBotAccount(botId).cts_url;
   }
 
   setToken(botId: string, token: string): void {
@@ -36,7 +36,7 @@ export class BotAccountsStorage {
 
   buildSignature(botId: string): string {
     const account = this.getBotAccount(botId);
-    const hmac = createHmac("sha256", account.secretKey);
+    const hmac = createHmac("sha256", account.secret_key);
     hmac.update(account.id);
     return hmac.digest("hex").toUpperCase();
   }

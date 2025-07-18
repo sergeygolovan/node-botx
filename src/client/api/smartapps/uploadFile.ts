@@ -1,25 +1,21 @@
-import { AuthorizedBotXMethod } from "../../authorizedBotxMethod";
-import { AsyncBufferReadable, AsyncBufferWritable, SpooledAsyncBuffer, CHUNK_SIZE } from "../../../asyncBuffer";
-import { HttpClient } from "../../httpClient";
-import { responseExceptionThrower } from "../../botxMethod";
-import { BotAccountsStorage } from "../../../bot/botAccountsStorage";
+import { AuthorizedBotXMethod, HttpClient } from "@client";
+import { BotAccountsStorage } from "@bot";
+import { AsyncBufferReadable, SpooledAsyncBuffer, CHUNK_SIZE } from "@asyncBuffer";
+import { responseExceptionThrower } from "@client";
+import { FileTypeNotAllowed } from "@client";
+import { VerifiedPayloadBaseModel } from "@models";
 
-// Исключения (пока заглушки)
-class FileTypeNotAllowed extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "FileTypeNotAllowed";
+export class BotXAPISmartAppUploadFileResult extends VerifiedPayloadBaseModel {
+  link!: string;
+}
+
+export class BotXAPISmartAppUploadFileResponsePayload extends VerifiedPayloadBaseModel {
+  result!: BotXAPISmartAppUploadFileResult;
+  status!: "ok";
+
+  toDomain(): string {
+    return this.result.link;
   }
-}
-
-export interface BotXAPISmartAppUploadFileResult {
-  link: string;
-}
-
-export interface BotXAPISmartAppUploadFileResponsePayload {
-  result: BotXAPISmartAppUploadFileResult;
-  status: "ok";
-  toDomain(): string;
 }
 
 export class SmartAppUploadFileMethod extends AuthorizedBotXMethod {
@@ -29,7 +25,7 @@ export class SmartAppUploadFileMethod extends AuthorizedBotXMethod {
     botAccountsStorage: BotAccountsStorage
   ) {
     super(senderBotId, httpClient, botAccountsStorage);
-    (this.statusHandlers as any) = {
+    this.statusHandlers = {
       ...this.statusHandlers,
       400: responseExceptionThrower(FileTypeNotAllowed),
     };
@@ -87,15 +83,10 @@ export class SmartAppUploadFileMethod extends AuthorizedBotXMethod {
         { body: formData }
       );
 
-      const responseData = await response.json();
-      const result: BotXAPISmartAppUploadFileResponsePayload = {
-        result: responseData.result,
-        status: responseData.status,
-        toDomain() {
-          return this.result.link;
-        }
-      };
-      return result;
+      return this.verifyAndExtractApiModel(
+        BotXAPISmartAppUploadFileResponsePayload,
+        response
+      );
     } finally {
       // Закрываем спулинговый буфер (автоматически удаляет временный файл)
       await spooledBuffer.close();

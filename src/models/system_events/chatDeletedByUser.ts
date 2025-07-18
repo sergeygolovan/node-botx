@@ -2,9 +2,9 @@ import { BotAccount, BotAPISystemEventTypes } from "@models";
 
 export class ChatDeletedByUserEvent {
   constructor(
-    public syncId: string,
+    public sync_id: string,
     public bot: BotAccount,
-    public chatId: string,
+    public chat_id: string,
     public huid: string,
     public rawCommand: Record<string, any>
   ) {}
@@ -12,8 +12,8 @@ export class ChatDeletedByUserEvent {
 
 export class BotAPIChatDeletedByUserData {
   constructor(
-    public userHuid: string,
-    public groupChatId: string
+    public user_huid: string,
+    public group_chat_id: string
   ) {}
 }
 
@@ -26,18 +26,18 @@ export class BotAPIChatDeletedByUserPayload {
 
 export class BotAPIChatDeletedByUser {
   constructor(
-    public syncId: string,
-    public botId: string,
+    public sync_id: string,
+    public bot_id: string,
     public payload: BotAPIChatDeletedByUserPayload,
     public sender: { host?: string }
   ) {}
 
   toDomain(rawCommand: Record<string, any>): ChatDeletedByUserEvent {
     return new ChatDeletedByUserEvent(
-      this.syncId,
-      new BotAccount(this.botId, this.sender.host),
-      this.payload.data.groupChatId,
-      this.payload.data.userHuid,
+      this.sync_id,
+      new BotAccount(this.bot_id, this.sender.host),
+      this.payload.data.group_chat_id,
+      this.payload.data.user_huid,
       rawCommand
     );
   }

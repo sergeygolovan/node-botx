@@ -26,7 +26,7 @@ export class AddUserMethod extends AuthorizedBotXMethod {
     botAccountsStorage: BotAccountsStorage
   ) {
     super(senderBotId, httpClient, botAccountsStorage);
-    (this.statusHandlers as any) = {
+    this.statusHandlers = {
       ...this.statusHandlers,
       403: responseExceptionThrower(PermissionDeniedError),
       404: responseExceptionThrower(ChatNotFoundError),

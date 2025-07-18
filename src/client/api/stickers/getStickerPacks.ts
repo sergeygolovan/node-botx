@@ -1,23 +1,24 @@
 import { AuthorizedBotXMethod, HttpClient } from "@client";
 import { BotAccountsStorage } from "@bot";
 import { StickerPackFromList, StickerPackPage, UnverifiedPayloadBaseModel, VerifiedPayloadBaseModel } from "@models";
+import { Missing, Undefined } from "@missing";
 
 export class BotXAPIGetStickerPacksRequestPayload extends UnverifiedPayloadBaseModel {
   user_huid!: string;
   limit!: number;
-  after?: string;
+  after!: Missing<string>;
 
   static fromDomain(huid: string, limit: number, after?: string): BotXAPIGetStickerPacksRequestPayload {
     return new BotXAPIGetStickerPacksRequestPayload({
       user_huid: huid,
       limit,
-      after: after || undefined,
+      after: after || Undefined,
     });
   }
 }
 
 export class BotXAPIGetPaginationResult extends VerifiedPayloadBaseModel {
-  after?: string;
+  after!: Missing<string>;
 }
 
 export class BotXAPIGetStickerPackResult extends VerifiedPayloadBaseModel {
@@ -25,7 +26,7 @@ export class BotXAPIGetStickerPackResult extends VerifiedPayloadBaseModel {
   name!: string;
   public!: boolean;
   stickers_count!: number;
-  stickers_order?: string[];
+  stickers_order!: Missing<string[]>;
 }
 
 export class BotXAPIGetStickerPacksResult extends VerifiedPayloadBaseModel {
@@ -45,10 +46,10 @@ export class BotXAPIGetStickerPacksResponsePayload extends VerifiedPayloadBaseMo
           stickerPack.name,
           stickerPack.public,
           stickerPack.stickers_count,
-          stickerPack.stickers_order
+          stickerPack.stickers_order === Undefined ? undefined : stickerPack.stickers_order
         )
       ),
-      this.result.pagination.after
+      this.result.pagination.after === Undefined ? undefined : this.result.pagination.after
     );
   }
 }

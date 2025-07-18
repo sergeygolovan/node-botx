@@ -14,33 +14,82 @@ import {
 } from "./enums";
 import { SmartAppEvent } from "./system_events/smartappEvent";
 import { UserDevice, UserSender } from "./message/incomingMessage";
+import { IsUUID, IsString, IsOptional, IsArray, ValidateNested, IsEnum, IsObject } from 'class-validator';
+import { Type } from 'class-transformer';
 
-type AnyDict = Record<string, any>;
+type AnyDict = Record<string, unknown>;
 
 export class BotAPISyncSmartAppSender {
+  @IsUUID()
+  user_huid!: string;
+
+  @IsOptional()
+  @IsUUID()
+  udid?: string;
+
+  @IsOptional()
+  @IsEnum(BotAPIClientPlatforms)
+  platform?: BotAPIClientPlatforms;
+
   constructor(
-    public userHuid: string,
-    public udid?: string,
-    public platform?: BotAPIClientPlatforms | null
-  ) {}
+    user_huid: string,
+    udid?: string,
+    platform?: BotAPIClientPlatforms | null
+  ) {
+    this.user_huid = user_huid;
+    this.udid = udid || undefined;
+    this.platform = platform || undefined;
+  }
 }
 
 export class BotAPISyncSmartAppPayload {
-  constructor(public data: AnyDict, public files: APIAsyncFile[]) {}
+  @IsObject()
+  data!: AnyDict;
+
+  @IsArray()
+  files!: APIAsyncFile[];
+
+  constructor(data: AnyDict, files: APIAsyncFile[]) {
+    this.data = data;
+    this.files = files;
+  }
 }
 
 export class BotAPISyncSmartAppEvent {
+  @IsUUID()
+  bot_id!: string;
+
+  @IsUUID()
+  group_chat_id!: string;
+
+  @ValidateNested()
+  @Type(() => BotAPISyncSmartAppSender)
+  sender_info!: BotAPISyncSmartAppSender;
+
+  @IsString()
+  method!: string;
+
+  @ValidateNested()
+  @Type(() => BotAPISyncSmartAppPayload)
+  payload!: BotAPISyncSmartAppPayload;
+
   constructor(
-    public botId: string,
-    public groupChatId: string,
-    public senderInfo: BotAPISyncSmartAppSender,
-    public method: string,
-    public payload: BotAPISyncSmartAppPayload
-  ) {}
+    bot_id: string,
+    group_chat_id: string,
+    sender_info: BotAPISyncSmartAppSender,
+    method: string,
+    payload: BotAPISyncSmartAppPayload
+  ) {
+    this.bot_id = bot_id;
+    this.group_chat_id = group_chat_id;
+    this.sender_info = sender_info;
+    this.method = method;
+    this.payload = payload;
+  }
 
   toDomain(rawSmartappEvent: AnyDict): SmartAppEvent {
-    const platform = this.senderInfo.platform
-      ? convertClientPlatformToDomain(this.senderInfo.platform)
+    const platform = this.sender_info.platform
+      ? convertClientPlatformToDomain(this.sender_info.platform)
       : null;
 
     const device = new UserDevice(
@@ -57,8 +106,8 @@ export class BotAPISyncSmartAppEvent {
     );
 
     const sender = new UserSender(
-      this.senderInfo.userHuid,
-      this.senderInfo.udid,
+      this.sender_info.user_huid,
+      this.sender_info.udid,
       null,
       null,
       null,
@@ -68,25 +117,37 @@ export class BotAPISyncSmartAppEvent {
     );
 
     return new SmartAppEvent(
-      null, // ref
-      this.botId, // smartappId
-      this.payload.data, // data
-      null, // opts
-      null, // smartappApiVersion
+      new BotAccount(this.bot_id, null), // bot
+      this.bot_id, // smartappId
+      {
+        method: this.method,
+        type: "smartapp_rpc",
+        params: this.payload.data,
+      }, // data
       this.payload.files.map(convertAsyncFileToDomain), // files
-      new Chat(this.groupChatId, ChatTypes.PERSONAL_CHAT), // chat
+      new Chat(this.group_chat_id, ChatTypes.PERSONAL_CHAT), // chat
       sender, // sender
-      new BotAccount(this.botId, null), // bot
-      rawSmartappEvent // rawCommand
+      rawSmartappEvent, // rawCommand
+      null, // ref
+      null, // opts
+      null // smartappApiVersion
     );
   }
 }
 
 export class BotAPISyncSmartAppEventResultResponse {
-  constructor(public data: any, public files: APIAsyncFile[]) {}
+  data!: Record<string, unknown>;
+
+  @IsArray()
+  files!: APIAsyncFile[];
+
+  constructor(data: Record<string, unknown>, files: APIAsyncFile[]) {
+    this.data = data;
+    this.files = files;
+  }
 
   static fromDomain(
-    data: any,
+    data: Record<string, unknown>,
     files: Missing<File[]> = Undefined
   ): BotAPISyncSmartAppEventResultResponse {
     const apiAsyncFiles =
@@ -103,16 +164,29 @@ export class BotAPISyncSmartAppEventResultResponse {
 }
 
 export class BotAPISyncSmartAppEventErrorResponse {
+  @IsString()
+  reason!: string;
+
+  @IsArray()
+  errors!: Record<string, unknown>[];
+
+  @IsObject()
+  error_data!: Record<string, any>;
+
   constructor(
-    public reason: string,
-    public errors: any[],
-    public error_data: Record<string, any>
-  ) {}
+    reason: string,
+    errors: Record<string, unknown>[],
+    error_data: Record<string, unknown>
+  ) {
+    this.reason = reason;
+    this.errors = errors;
+    this.error_data = error_data;
+  }
 
   static fromDomain(
     reason: Missing<string> = Undefined,
-    errors: Missing<any[]> = Undefined,
-    errorData: Missing<Record<string, any>> = Undefined
+    errors: Missing<Record<string, unknown>[]> = Undefined,
+    errorData: Missing<Record<string, unknown>> = Undefined
   ): BotAPISyncSmartAppEventErrorResponse {
     return new BotAPISyncSmartAppEventErrorResponse(
       reason === Undefined ? "smartapp_error" : reason,
@@ -124,12 +198,13 @@ export class BotAPISyncSmartAppEventErrorResponse {
   jsonableDict(): AnyDict {
     return {
       status: "error",
-      ...JSON.parse(JSON.stringify(this)),
+      reason: this.reason,
+      errors: this.errors,
+      error_data: this.error_data,
     };
   }
 }
 
-// Объединённый тип для результата или ошибки
 export type BotAPISyncSmartAppEventResponse =
   | BotAPISyncSmartAppEventResultResponse
   | BotAPISyncSmartAppEventErrorResponse;

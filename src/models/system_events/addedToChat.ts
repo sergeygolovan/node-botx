@@ -1,74 +1,80 @@
-import { z } from 'zod';
-import { BotAccount, Chat, BotAPISystemEventTypes, convertChatTypeToDomain, BotAPIBaseCommandModel, BotAPIBaseSystemEventPayloadModel, BotAPIUserContextModel, BotAPIChatContextModel } from "@models";
+import { BotAccount, Chat, BotAPISystemEventTypes, BotAPICommandTypes, convertChatTypeToDomain, BotAPIBaseCommandModel, BotAPIBaseSystemEventPayloadModel, BotAPIUserContextModel, BotAPIChatContextModel } from "@models";
+import { IsArray, IsString, IsUUID, ValidateNested } from "class-validator";
+import { Type } from "class-transformer";
 
 export class AddedToChatEvent {
   constructor(
     public bot: BotAccount,
-    public rawCommand: Record<string, any>,
+    public rawCommand: Record<string, unknown>,
     public huids: string[],
     public chat: Chat
   ) {}
 }
 
-const BotAPIAddedToChatDataSchema = z.object({
-    added_members: z.array(z.string().uuid()),
-});
-
-const BotAPIAddedToChatPayloadSchema = BotAPIBaseSystemEventPayloadModel.schema.extend({
-    data: BotAPIAddedToChatDataSchema,
-});
-
-const BotAPIAddedToChatSchema = BotAPIBaseCommandModel.schema.extend({
-    payload: BotAPIAddedToChatPayloadSchema,
-    from: BotAPIUserContextModel.schema.merge(BotAPIChatContextModel.schema),
-});
-
 export class BotAPIAddedToChatData {
-  constructor(
-    public added_members: string[]
-  ) {}
+  @IsArray()
+  @IsString({ each: true })
+  @IsUUID(undefined, { each: true })
+  added_members!: string[];
+
+  constructor(added_members: string[]) {
+    this.added_members = added_members;
+  }
 }
 
-export class BotAPIAddedToChatPayload {
-  constructor(
-    public body: BotAPISystemEventTypes,
-    public data: BotAPIAddedToChatData
-  ) {}
+export class BotAPIAddedToChatPayload extends BotAPIBaseSystemEventPayloadModel {
+  @ValidateNested()
+  @Type(() => BotAPIAddedToChatData)
+  data!: BotAPIAddedToChatData;
+
+  constructor(body: BotAPISystemEventTypes, data: BotAPIAddedToChatData) {
+    super(BotAPICommandTypes.SYSTEM, body);
+    this.data = data;
+  }
 }
 
 export class BotAPIAddedToChat extends BotAPIBaseCommandModel {
+  @ValidateNested()
+  @Type(() => BotAPIAddedToChatPayload)
+  payload!: BotAPIAddedToChatPayload;
+
+  @ValidateNested()
+  @Type(() => BotAPIUserContextModel)
+  from!: BotAPIUserContextModel & BotAPIChatContextModel;
+
   constructor(
     bot_id: string,
     sync_id: string,
     proto_version: number,
-    public payload: BotAPIAddedToChatPayload,
-    public from: BotAPIUserContextModel & BotAPIChatContextModel,
+    payload: BotAPIAddedToChatPayload,
+    from: BotAPIUserContextModel & BotAPIChatContextModel,
   ) {
       super(bot_id, sync_id, proto_version);
+      this.payload = payload;
+      this.from = from;
   }
 
-  static parse(data: Record<string, any>): BotAPIAddedToChat {
-    const validated = BotAPIAddedToChatSchema.parse(data);
-    const payloadData = new BotAPIAddedToChatData(validated.payload.data.added_members);
-    const payload = new BotAPIAddedToChatPayload(validated.payload.body as BotAPISystemEventTypes, payloadData);
+  static parse(data: any): BotAPIAddedToChat {
+    const payloadData = new BotAPIAddedToChatData(data.payload?.data?.added_members || []);
+    const payload = new BotAPIAddedToChatPayload(data.payload?.body, payloadData);
 
-    // This is a bit of a hack, we should probably have a proper from-validated factory for this
+    // Создаем from объект
     const from = new BotAPIUserContextModel(
-        validated.from.host, validated.from.user_huid
+        data.from?.host, 
+        data.from?.user_huid
     ) as BotAPIUserContextModel & BotAPIChatContextModel;
-    Object.assign(from, validated.from);
-
+    Object.assign(from, data.from);
 
     return new BotAPIAddedToChat(
-        validated.bot_id,
-        validated.sync_id,
-        validated.proto_version,
+        data.bot_id,
+        data.sync_id,
+        data.proto_version,
         payload,
         from,
     );
   }
 
-  toDomain(rawCommand: Record<string, any>): AddedToChatEvent {
+  toDomain(rawCommand: Record<string, unknown>): AddedToChatEvent {
     return new AddedToChatEvent(
       new BotAccount(this.bot_id, this.from.host),
       rawCommand,

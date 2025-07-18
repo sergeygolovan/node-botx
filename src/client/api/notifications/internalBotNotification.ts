@@ -4,50 +4,38 @@ import { UnverifiedPayloadBaseModel, VerifiedPayloadBaseModel } from "@models";
 import { Missing, MissingOptional } from "@missing";
 import { ChatNotFoundError, RateLimitReachedError, BotIsNotChatMemberError, FinalRecipientsListEmptyError } from "@client/exceptions";
 
-// Исключения (пока заглушки)
-class ChatNotFoundError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "ChatNotFoundError";
+export class BotXAPIInternalBotNotificationRequestPayload extends UnverifiedPayloadBaseModel {
+  group_chat_id!: string;
+  data!: Record<string, any>;
+  opts!: Missing<Record<string, any>>;
+  recipients!: MissingOptional<string[]>;
+
+  static fromDomain(
+    chatId: string,
+    data: Record<string, any>,
+    opts: Missing<Record<string, any>>,
+    recipients: MissingOptional<string[]>
+  ): BotXAPIInternalBotNotificationRequestPayload {
+    return new BotXAPIInternalBotNotificationRequestPayload({
+      group_chat_id: chatId,
+      data,
+      opts,
+      recipients,
+    });
   }
 }
 
-class RateLimitReachedError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "RateLimitReachedError";
+export class BotXAPISyncIdResult extends VerifiedPayloadBaseModel {
+  sync_id!: string;
+}
+
+export class BotXAPIInternalBotNotificationResponsePayload extends VerifiedPayloadBaseModel {
+  status!: "ok";
+  result!: BotXAPISyncIdResult;
+
+  toDomain(): string {
+    return this.result.sync_id;
   }
-}
-
-class BotIsNotChatMemberError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "BotIsNotChatMemberError";
-  }
-}
-
-class FinalRecipientsListEmptyError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "FinalRecipientsListEmptyError";
-  }
-}
-
-export interface BotXAPIInternalBotNotificationRequestPayload {
-  groupChatId: string;
-  data: Record<string, any>;
-  opts?: Record<string, any>;
-  recipients?: string[];
-}
-
-export interface BotXAPISyncIdResult {
-  syncId: string;
-}
-
-export interface BotXAPIInternalBotNotificationResponsePayload {
-  status: "ok";
-  result: BotXAPISyncIdResult;
-  toDomain(): string;
 }
 
 export class InternalBotNotificationMethod extends AuthorizedBotXMethod {
@@ -57,11 +45,11 @@ export class InternalBotNotificationMethod extends AuthorizedBotXMethod {
     botAccountsStorage: BotAccountsStorage
   ) {
     super(senderBotId, httpClient, botAccountsStorage);
-    (this.statusHandlers as any) = {
+    this.statusHandlers = {
       ...this.statusHandlers,
       429: responseExceptionThrower(RateLimitReachedError),
     };
-    (this.errorCallbackHandlers as any) = {
+    this.errorCallbackHandlers = {
       ...this.errorCallbackHandlers,
       "chat_not_found": callbackExceptionThrower(ChatNotFoundError),
       "bot_is_not_a_chat_member": callbackExceptionThrower(BotIsNotChatMemberError),
@@ -80,40 +68,18 @@ export class InternalBotNotificationMethod extends AuthorizedBotXMethod {
     const response = await this.botxMethodCall(
       "POST",
       this.buildUrl(path),
-      { json: payload }
+      { json: payload.jsonableDict() }
     );
 
-    const responseData = await response.json();
-    const result: BotXAPIInternalBotNotificationResponsePayload = {
-      status: responseData.status,
-      result: responseData.result,
-      toDomain() {
-        return this.result.syncId;
-      }
-    };
+    const apiModel = await this.verifyAndExtractApiModel(BotXAPIInternalBotNotificationResponsePayload, response);
 
-    // Обработка callback (упрощенная версия)
-    if (waitCallback) {
-      await this.processCallback(
-        result.result.syncId,
-        waitCallback,
-        callbackTimeout || null,
-        defaultCallbackTimeout
-      );
-    }
+    await this.processCallback(
+      apiModel.result.sync_id,
+      waitCallback,
+      callbackTimeout || null,
+      defaultCallbackTimeout
+    );
 
-    return result;
-  }
-
-  protected async processCallback(
-    syncId: string,
-    waitCallback: boolean,
-    callbackTimeout: number | null,
-    defaultCallbackTimeout: number
-  ): Promise<any> {
-    // Упрощенная реализация обработки callback
-    // В реальной реализации здесь должна быть логика ожидания callback
-    console.log(`Processing callback for syncId: ${syncId}`);
-    return null;
+    return apiModel;
   }
 } 

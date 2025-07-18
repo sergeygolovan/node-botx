@@ -10,7 +10,7 @@ export class CTSLoginEvent {
 
 export class BotAPICTSLoginData {
   constructor(
-    public userHuid: string
+    public user_huid: string
   ) {}
 }
 
@@ -23,16 +23,16 @@ export class BotAPICTSLoginPayload {
 
 export class BotAPICTSLogin {
   constructor(
-    public botId: string,
+    public bot_id: string,
     public payload: BotAPICTSLoginPayload,
     public sender: { host?: string }
   ) {}
 
   toDomain(rawCommand: Record<string, any>): CTSLoginEvent {
     return new CTSLoginEvent(
-      new BotAccount(this.botId, this.sender.host),
+      new BotAccount(this.bot_id, this.sender.host),
       rawCommand,
-      this.payload.data.userHuid
+      this.payload.data.user_huid
     );
   }
 } 

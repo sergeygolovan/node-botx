@@ -25,12 +25,12 @@ export class BotXAPIGetStickerResponsePayload extends VerifiedPayloadBaseModel {
   status!: "ok";
   result!: BotXAPIGetStickerResult;
 
-  toDomain(packId: string): Sticker {
+  toDomain(pack_id: string): Sticker {
     return new Sticker(
       this.result.id,
       this.result.emoji,
       this.result.link,
-      packId
+      pack_id
     );
   }
 }
@@ -45,7 +45,7 @@ export class GetStickerMethod extends AuthorizedBotXMethod {
     this.statusHandlers = {
       ...this.statusHandlers,
       404: responseExceptionThrower(StickerPackOrStickerNotFoundError),
-    } as any;
+    };
   }
 
   async execute(payload: BotXAPIGetStickerRequestPayload): Promise<BotXAPIGetStickerResponsePayload> {

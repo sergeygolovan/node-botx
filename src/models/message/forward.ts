@@ -1,12 +1,30 @@
 import { BotAPIEntityTypes } from "../enums";
+import { IsString } from "class-validator";
 
 export class Forward {
+  @IsString()
+  messageId: string;
+
+  @IsString()
+  chatId: string;
+
+  @IsString()
+  senderHuid: string;
+
+  @IsString()
+  senderName: string;
+
   constructor(
-    public messageId: string,
-    public chatId: string,
-    public senderHuid: string,
-    public senderName: string
-  ) {}
+    messageId: string,
+    chatId: string,
+    senderHuid: string,
+    senderName: string
+  ) {
+    this.messageId = messageId;
+    this.chatId = chatId;
+    this.senderHuid = senderHuid;
+    this.senderName = senderName;
+  }
 
   toAPI(): BotAPIForward {
     return {

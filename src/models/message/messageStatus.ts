@@ -1,8 +1,8 @@
 export class MessageStatus {
   constructor(
-    public groupChatId: string,
-    public sentTo: string[],
-    public readBy: Record<string, Date>,
-    public receivedBy: Record<string, Date>
+    public group_chat_id: string,
+    public sent_to: string[],
+    public read_by: Record<string, Date>,
+    public received_by: Record<string, Date>
   ) {}
 } 

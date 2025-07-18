@@ -1,39 +1,84 @@
-import { APIChatTypes, convertChatTypeToDomain, IncomingChatTypes } from "./enums";
-import { IncomingMessage } from "./message/incomingMessage";
+import { APIChatTypes, convertChatTypeToDomain } from "./enums";
+import { IsUUID, IsString, IsOptional, IsBoolean, IsEnum } from "class-validator";
 
 export type BotMenu = Record<string, string>;
 
 export class StatusRecipient {
-  constructor(
-    public botId: string,
-    public huid: string,
-    public adLogin: string | null,
-    public adDomain: string | null,
-    public isAdmin: boolean | null,
-    public chatType: IncomingChatTypes,
-  ) {}
+  @IsUUID()
+  bot_id: string;
 
-  static fromIncomingMessage(incomingMessage: IncomingMessage): StatusRecipient {
-    return new StatusRecipient(
-      incomingMessage.bot.id,
-      incomingMessage.sender.huid,
-      incomingMessage.sender.adLogin ?? null,
-      incomingMessage.sender.adDomain ?? null,
-      incomingMessage.sender.isChatAdmin ?? null,
-      incomingMessage.chat.type,
-    );
+  @IsUUID()
+  huid: string;
+
+  @IsOptional()
+  @IsString()
+  ad_login: string | null;
+
+  @IsOptional()
+  @IsString()
+  ad_domain: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  is_admin: boolean | null;
+
+  @IsEnum(APIChatTypes)
+  chat_type: APIChatTypes | string;
+
+  constructor(
+    bot_id: string,
+    huid: string,
+    ad_login: string | null,
+    ad_domain: string | null,
+    is_admin: boolean | null,
+    chat_type: APIChatTypes | string,
+  ) {
+    this.bot_id = bot_id;
+    this.huid = huid;
+    this.ad_login = ad_login;
+    this.ad_domain = ad_domain;
+    this.is_admin = is_admin;
+    this.chat_type = chat_type;
   }
 }
 
 export class BotAPIStatusRecipient {
+  @IsUUID()
+  bot_id: string;
+
+  @IsUUID()
+  user_huid: string;
+
+  @IsOptional()
+  @IsString()
+  ad_login: string | null;
+
+  @IsOptional()
+  @IsString()
+  ad_domain: string | null;
+
+  @IsOptional()
+  @IsBoolean()
+  is_admin: boolean | null;
+
+  @IsEnum(APIChatTypes)
+  chat_type: APIChatTypes | string;
+
   constructor(
-    public botId: string,
-    public userHuid: string,
-    public adLogin: string | null,
-    public adDomain: string | null,
-    public isAdmin: boolean | null,
-    public chatType: APIChatTypes | string,
-  ) {}
+    bot_id: string,
+    user_huid: string,
+    ad_login: string | null,
+    ad_domain: string | null,
+    is_admin: boolean | null,
+    chat_type: APIChatTypes | string,
+  ) {
+    this.bot_id = bot_id;
+    this.user_huid = user_huid;
+    this.ad_login = ad_login;
+    this.ad_domain = ad_domain;
+    this.is_admin = is_admin;
+    this.chat_type = chat_type;
+  }
 
   // Замена пустых строк на null (эмулирует валидатор)
   static normalizeField<T extends string | boolean | null>(fieldValue: T): T | null {
@@ -41,51 +86,78 @@ export class BotAPIStatusRecipient {
   }
 
   static fromRaw(data: {
-    botId: string;
-    userHuid: string;
-    adLogin?: string | null;
-    adDomain?: string | null;
-    isAdmin?: boolean | null;
-    chatType: APIChatTypes | string;
+    bot_id: string;
+    user_huid: string;
+    ad_login?: string | null;
+    ad_domain?: string | null;
+    is_admin?: boolean | null;
+    chat_type: APIChatTypes | string;
   }): BotAPIStatusRecipient {
     return new BotAPIStatusRecipient(
-      data.botId,
-      data.userHuid,
-      this.normalizeField(data.adLogin ?? null),
-      this.normalizeField(data.adDomain ?? null),
-      this.normalizeField(data.isAdmin ?? null),
-      data.chatType,
+      data.bot_id,
+      data.user_huid,
+      this.normalizeField(data.ad_login ?? null),
+      this.normalizeField(data.ad_domain ?? null),
+      this.normalizeField(data.is_admin ?? null),
+      data.chat_type,
     );
   }
 
   toDomain(): StatusRecipient {
     return new StatusRecipient(
-      this.botId,
-      this.userHuid,
-      this.adLogin,
-      this.adDomain,
-      this.isAdmin,
-      convertChatTypeToDomain(this.chatType),
+      this.bot_id,
+      this.user_huid,
+      this.ad_login,
+      this.ad_domain,
+      this.is_admin,
+      convertChatTypeToDomain(this.chat_type),
     );
   }
 }
 
 export class BotAPIBotMenuItem {
+  @IsString()
+  description: string;
+
+  @IsString()
+  body: string;
+
+  @IsString()
+  name: string;
+
   constructor(
-    public description: string,
-    public body: string,
-    public name: string,
-  ) {}
+    description: string,
+    body: string,
+    name: string
+  ) {
+    this.description = description;
+    this.body = body;
+    this.name = name;
+  }
 }
 
 export type BotAPIBotMenu = BotAPIBotMenuItem[];
 
 export class BotAPIStatusResult {
+  @IsString()
+  commands: BotAPIBotMenu;
+
+  @IsBoolean()
+  enabled: true = true;
+
+  @IsOptional()
+  @IsString()
+  status_message?: string;
+
   constructor(
-    public commands: BotAPIBotMenu,
-    public enabled: true = true,
-    public statusMessage?: string,
-  ) {}
+    commands: BotAPIBotMenu,
+    enabled: true = true,
+    status_message?: string
+  ) {
+    this.commands = commands;
+    this.enabled = enabled;
+    this.status_message = status_message;
+  }
 }
 
 export class BotAPIStatus {
@@ -97,7 +169,7 @@ export class BotAPIStatus {
 
 export function buildBotStatusResponse(botMenu: BotMenu): object {
   const commands = Object.entries(botMenu).map(
-    ([command, description]) => new BotAPIBotMenuItem(command, command, description),
+    ([command, description]) => new BotAPIBotMenuItem(description, command, command),
   );
 
   const status = new BotAPIStatus(
@@ -105,16 +177,5 @@ export function buildBotStatusResponse(botMenu: BotMenu): object {
   );
 
   // Эмулируем asdict из Python, преобразуя объект в plain object
-  return {
-    status: status.status,
-    result: {
-      commands: status.result.commands.map(item => ({
-        description: item.description,
-        body: item.body,
-        name: item.name,
-      })),
-      enabled: status.result.enabled,
-      status_message: status.result.statusMessage,
-    }
-  };
+  return status;
 }

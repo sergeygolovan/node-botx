@@ -1,29 +1,48 @@
 import { AuthorizedBotXMethod, HttpClient } from "@client";
 import { BotAccountsStorage } from "@bot";
 import { SmartApp } from "@models";
+import { UnverifiedPayloadBaseModel, VerifiedPayloadBaseModel } from "@models";
+import { Missing, Undefined } from "@missing";
 
-export interface BotXAPISmartAppsListRequestPayload {
-  version?: number;
+export class BotXAPISmartAppsListRequestPayload extends UnverifiedPayloadBaseModel {
+  version!: Missing<number>;
+
+  static fromDomain(version: Missing<number> = Undefined): BotXAPISmartAppsListRequestPayload {
+    return new BotXAPISmartAppsListRequestPayload({ version });
+  }
 }
 
-export interface BotXAPISmartAppEntity {
-  appId: string;
-  enabled: boolean;
-  id: string;
-  name: string;
+export class BotXAPISmartAppEntity extends VerifiedPayloadBaseModel {
+  app_id!: string;
+  enabled!: boolean;
+  id!: string;
+  name!: string;
   avatar?: string;
-  avatarPreview?: string;
+  avatar_preview?: string;
 }
 
-export interface BotXAPISmartAppsListResult {
-  apps: BotXAPISmartAppEntity[];
-  version: number;
+export class BotXAPISmartAppsListResult extends VerifiedPayloadBaseModel {
+  phonebook_version!: number;
+  smartapps!: BotXAPISmartAppEntity[];
 }
 
-export interface BotXAPISmartAppsListResponsePayload {
-  status: "ok";
-  result: BotXAPISmartAppsListResult;
-  toDomain(): [SmartApp[], number];
+export class BotXAPISmartAppsListResponsePayload extends VerifiedPayloadBaseModel {
+  result!: BotXAPISmartAppsListResult;
+  status!: "ok";
+
+  toDomain(): [SmartApp[], number] {
+    const smartappsList = this.result.smartapps.map((smartapp: BotXAPISmartAppEntity) => 
+      new SmartApp(
+        smartapp.app_id,
+        smartapp.enabled,
+        smartapp.id,
+        smartapp.name,
+        smartapp.avatar,
+        smartapp.avatar_preview
+      )
+    );
+    return [smartappsList, this.result.phonebook_version];
+  }
 }
 
 export class SmartAppsListMethod extends AuthorizedBotXMethod {
@@ -41,27 +60,12 @@ export class SmartAppsListMethod extends AuthorizedBotXMethod {
     const response = await this.botxMethodCall(
       "GET",
       this.buildUrl(path),
-      { params: payload }
+      { params: payload.jsonableDict() }
     );
 
-    const responseData = await response.json();
-    const result: BotXAPISmartAppsListResponsePayload = {
-      result: responseData.result,
-      status: responseData.status,
-      toDomain() {
-        const smartappsList = this.result.apps.map((smartapp: BotXAPISmartAppEntity) => 
-          new SmartApp(
-            smartapp.appId,
-            smartapp.enabled,
-            smartapp.id,
-            smartapp.name,
-            smartapp.avatar,
-            smartapp.avatarPreview
-          )
-        );
-        return [smartappsList, this.result.version];
-      }
-    };
-    return result;
+    return this.verifyAndExtractApiModel(
+      BotXAPISmartAppsListResponsePayload,
+      response
+    );
   }
 } 

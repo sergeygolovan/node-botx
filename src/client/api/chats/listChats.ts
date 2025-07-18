@@ -1,34 +1,54 @@
 import { AuthorizedBotXMethod, HttpClient } from "@client";
 import { BotAccountsStorage } from "@bot";
-import { ChatListItem, ChatTypes } from "@models";
+import { APIChatTypes, ChatListItem, VerifiedPayloadBaseModel, convertChatTypeToDomain } from "@models";
 
-export interface BotXAPIChatEntity {
-  groupChatId: string;
-  name: string;
+export class BotXAPIListChatResult extends VerifiedPayloadBaseModel {
+  group_chat_id!: string;
+  chat_type!: APIChatTypes;
+  name!: string;
   description?: string;
-  avatar?: string;
-  chatType: string;
-  membersCount: number;
-  members: BotXAPIChatMember[];
-  insertedAt: string;
-  updatedAt: string;
-  sharedHistory: boolean;
+  members!: string[];
+  inserted_at!: string;
+  updated_at!: string;
+  shared_history!: boolean;
 }
 
-export interface BotXAPIChatMember {
-  huid: string;
-  name: string;
-  avatar?: string;
-}
+export class BotXAPIListChatResponsePayload extends VerifiedPayloadBaseModel {
+  status!: "ok";
+  result!: (BotXAPIListChatResult | Record<string, any>)[];
 
-export interface BotXAPIChatsListResult {
-  chats: BotXAPIChatEntity[];
-}
+  toDomain(): ChatListItem[] {
+    const chatsList = this.result
+      .filter(chatItem => chatItem instanceof BotXAPIListChatResult)
+      .map(chatItem => {
+        const chat = chatItem as BotXAPIListChatResult;
+        const chatType = convertChatTypeToDomain(chat.chat_type);
+        
+        // Проверяем, что тип чата поддерживается (как в Python оригинале)
+        if (chatType === "UNSUPPORTED") {
+          return null;
+        }
+        
+        return new ChatListItem(
+          chat.group_chat_id,
+          chatType,
+          chat.name,
+          chat.description,
+          chat.members,
+          new Date(chat.inserted_at),
+          new Date(chat.updated_at),
+          chat.shared_history
+        );
+      })
+      .filter((item): item is ChatListItem => item !== null);
 
-export interface BotXAPIChatsListResponsePayload {
-  status: "ok";
-  result: BotXAPIChatsListResult;
-  toDomain(): ChatListItem[];
+    // Логирование как в Python оригинале
+    if (chatsList.length !== this.result.length) {
+      console.warn("One or more unsupported chat types skipped");
+    }
+
+    return chatsList;
+  }
 }
 
 export class ListChatsMethod extends AuthorizedBotXMethod {
@@ -40,7 +60,7 @@ export class ListChatsMethod extends AuthorizedBotXMethod {
     super(senderBotId, httpClient, botAccountsStorage);
   }
 
-  async execute(): Promise<BotXAPIChatsListResponsePayload> {
+  async execute(): Promise<BotXAPIListChatResponsePayload> {
     const path = "/api/v3/botx/chats/list";
 
     const response = await this.botxMethodCall(
@@ -48,23 +68,6 @@ export class ListChatsMethod extends AuthorizedBotXMethod {
       this.buildUrl(path)
     );
 
-    const responseData = await response.json();
-    const result: BotXAPIChatsListResponsePayload = {
-      status: responseData.status,
-      result: responseData.result,
-      toDomain(): ChatListItem[] {
-        return this.result.chats.map(chatItem => new ChatListItem(
-          chatItem.groupChatId,
-          chatItem.chatType as ChatTypes,
-          chatItem.name,
-          chatItem.description,
-          chatItem.members.map(member => member.huid),
-          new Date(chatItem.insertedAt),
-          new Date(chatItem.updatedAt),
-          chatItem.sharedHistory
-        ));
-      }
-    };
-    return result;
+    return this.verifyAndExtractApiModel(BotXAPIListChatResponsePayload, response);
   }
 } 

@@ -1,59 +1,63 @@
-import { BotAPISystemEventTypes, IncomingChatTypes, BotAccount, Chat, BotSender } from "@models";
+import { BotAPISystemEventTypes, BotAccount, Chat, BotSender, convertChatTypeToDomain } from "@models";
 
 export class InternalBotNotificationEvent {
   constructor(
     public bot: BotAccount,
-    public rawCommand: Record<string, unknown>,
-    public data: Record<string, unknown>,
-    public opts: Record<string, unknown>,
+    public rawCommand: Record<string, any>,
+    public data: Record<string, any>,
+    public opts: Record<string, any>,
     public chat: Chat,
     public sender: BotSender
   ) {}
 }
 
-export interface BotAPIInternalBotNotificationData {
-  data: Record<string, unknown>;
-  opts: Record<string, unknown>;
+export class BotAPIInternalBotNotificationData {
+  constructor(
+    public data: Record<string, any>,
+    public opts: Record<string, any>
+  ) {}
 }
 
-export interface BotAPIInternalBotNotificationPayload {
-  body: BotAPISystemEventTypes.INTERNAL_BOT_NOTIFICATION;
-  data: BotAPIInternalBotNotificationData;
+export class BotAPIInternalBotNotificationPayload {
+  constructor(
+    public body: BotAPISystemEventTypes,
+    public data: BotAPIInternalBotNotificationData
+  ) {}
 }
 
-export interface BotAPIBotContext {
-  host: string;
-  groupChatId: string;
-  chatType: string;
-  userHuid: string;
-  isAdmin?: boolean | null;
-  isCreator?: boolean | null;
+export class BotAPIBotContext {
+  constructor(
+    public host: string,
+    public group_chat_id: string,
+    public chat_type: string,
+    public user_huid: string,
+    public is_admin?: boolean | null,
+    public is_creator?: boolean | null
+  ) {}
 }
 
-export interface BotAPIInternalBotNotification {
-  botId: string;
-  command: BotAPIInternalBotNotificationPayload;
-  from: BotAPIBotContext;
-  toDomain(rawCommand: Record<string, unknown>): InternalBotNotificationEvent;
-}
+export class BotAPIInternalBotNotification {
+  constructor(
+    public bot_id: string,
+    public payload: BotAPIInternalBotNotificationPayload,
+    public sender: BotAPIBotContext
+  ) {}
 
-export function toDomainInternalBotNotification(
-  api: BotAPIInternalBotNotification,
-  rawCommand: Record<string, unknown>
-): InternalBotNotificationEvent {
-  return new InternalBotNotificationEvent(
-    new BotAccount(api.botId, api.from.host),
-    rawCommand,
-    api.command.data.data,
-    api.command.data.opts,
-    new Chat(
-      api.from.groupChatId,
-      api.from.chatType as IncomingChatTypes
-    ),
-    new BotSender(
-      api.from.userHuid,
-      api.from.isAdmin ?? null,
-      api.from.isCreator ?? null
-    )
-  );
+  toDomain(rawCommand: Record<string, any>): InternalBotNotificationEvent {
+    return new InternalBotNotificationEvent(
+      new BotAccount(this.bot_id, this.sender.host),
+      rawCommand,
+      this.payload.data.data,
+      this.payload.data.opts,
+      new Chat(
+        this.sender.group_chat_id,
+        convertChatTypeToDomain(this.sender.chat_type)
+      ),
+      new BotSender(
+        this.sender.user_huid,
+        this.sender.is_admin ?? null,
+        this.sender.is_creator ?? null
+      )
+    );
+  }
 } 

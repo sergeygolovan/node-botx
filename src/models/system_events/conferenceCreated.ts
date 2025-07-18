@@ -4,13 +4,13 @@ export class ConferenceCreatedEvent {
   constructor(
     public bot: BotAccount,
     public rawCommand: Record<string, any>,
-    public callId: string
+    public call_id: string
   ) {}
 }
 
 export class BotAPIConferenceCreatedData {
   constructor(
-    public callId: string
+    public call_id: string
   ) {}
 }
 
@@ -23,16 +23,16 @@ export class BotAPIConferenceCreatedPayload {
 
 export class BotAPIConferenceCreated {
   constructor(
-    public botId: string,
+    public bot_id: string,
     public payload: BotAPIConferenceCreatedPayload,
     public sender: { host?: string }
   ) {}
 
   toDomain(rawCommand: Record<string, any>): ConferenceCreatedEvent {
     return new ConferenceCreatedEvent(
-      new BotAccount(this.botId, this.sender.host),
+      new BotAccount(this.bot_id, this.sender.host),
       rawCommand,
-      this.payload.data.callId
+      this.payload.data.call_id
     );
   }
 } 

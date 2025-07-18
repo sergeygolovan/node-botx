@@ -4,50 +4,53 @@ import { Entity } from "../message/incomingMessage";
 export class EventEdit {
   constructor(
     public bot: BotAccount,
-    public rawCommand: Record<string, unknown>,
+    public rawCommand: Record<string, any>,
     public body: string | null,
-    public syncId: string,
-    public chatId: string,
+    public sync_id: string,
+    public chat_id: string,
     public huid: string,
     public attachments: IncomingAttachment[],
     public entities: Entity[]
   ) {}
 }
 
-export interface BotAPIEventEditData {
-  body?: string | null;
+export class BotAPIEventEditData {
+  constructor(
+    public body?: string | null
+  ) {}
 }
 
-export interface BotAPIEventEditPayload {
-  body: BotAPISystemEventTypes.EVENT_EDIT;
-  data: BotAPIEventEditData;
+export class BotAPIEventEditPayload {
+  constructor(
+    public body: BotAPISystemEventTypes,
+    public data: BotAPIEventEditData
+  ) {}
 }
 
-export interface BotAPIEventEdit {
-  botId: string;
-  command: BotAPIEventEditPayload;
-  from: {
-    groupChatId: string;
-    userHuid: string;
-    host: string;
-  };
-  syncId: string;
-  attachments: IncomingAttachment[];
-  entities: Entity[];
-}
+export class BotAPIEventEdit {
+  constructor(
+    public bot_id: string,
+    public payload: BotAPIEventEditPayload,
+    public sender: {
+      group_chat_id: string;
+      user_huid: string;
+      host: string;
+    },
+    public sync_id: string,
+    public attachments: IncomingAttachment[],
+    public entities: Entity[]
+  ) {}
 
-export function toDomainEventEdit(
-  api: BotAPIEventEdit,
-  rawCommand: Record<string, unknown>
-): EventEdit {
-  return new EventEdit(
-    new BotAccount(api.botId, api.from.host),
-    rawCommand,
-    api.command.data.body ?? null,
-    api.syncId,
-    api.from.groupChatId,
-    api.from.userHuid,
-    api.attachments,
-    api.entities
-  );
+  toDomain(rawCommand: Record<string, any>): EventEdit {
+    return new EventEdit(
+      new BotAccount(this.bot_id, this.sender.host),
+      rawCommand,
+      this.payload.data.body ?? null,
+      this.sync_id,
+      this.sender.group_chat_id,
+      this.sender.user_huid,
+      this.attachments,
+      this.entities
+    );
+  }
 } 

@@ -32,7 +32,7 @@ export class UsersAsCSVMethod extends AuthorizedBotXMethod {
     this.statusHandlers = {
       ...this.statusHandlers,
       400: responseExceptionThrower(NoUserKindSelectedError),
-    } as any;
+    };
   }
 
   async execute(payload: BotXAPIUsersAsCSVRequestPayload, asyncBuffer: AsyncBufferWritable): Promise<void> {
