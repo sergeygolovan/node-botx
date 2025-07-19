@@ -2,6 +2,7 @@ import { BotXMethodCallback } from "@models";
 import { CallbackRepoProto } from "./callbackRepoProto";
 import { BotXMethodCallbackNotFoundError } from "../exceptions";
 import { CallbackMemoryRepo } from "./callbackMemoryRepo";
+import { logger } from "@logger";
 
 interface CallbackAlarm {
   alarmTime: number;
@@ -41,8 +42,7 @@ export class CallbackManager {
     const timeoutId = setTimeout(async () => {
       this.cancelCallbackTimeoutAlarm(syncId);
       await this.popBotxMethodCallback(syncId);
-      // TODO: добавить логгер
-      // console.error(`Callback \`${syncId}\` wasn't waited`);
+      logger.error(`Callback \`${syncId}\` wasn't waited`);
     }, timeout * 1000);
     this.callbackAlarms.set(syncId, { alarmTime, timeoutId });
   }

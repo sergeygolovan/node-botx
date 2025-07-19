@@ -2,9 +2,13 @@ import { AsyncBufferReadable, AsyncBufferWritable } from "@asyncBuffer";
 import { BubbleMarkup, KeyboardMarkup } from "./message/markup";
 import { IncomingFileAttachment, OutgoingAttachment } from "./attachments";
 import { Missing, MissingOptional } from "@missing";
-import { EditMessage, OutgoingMessage, ReplyMessage } from "@models";
+import { EditMessage, OutgoingMessage, ReplyMessage, BotAccountWithSecret } from "@models";
 import { ChatTypes } from "./enums";
-
+import { HandlerCollector } from "../bot/handlerCollector";
+import { Middleware } from "../bot/handler";
+import { HttpClient } from "../client/httpClient";
+import { ExceptionHandlersDict } from "../bot/middlewares/exceptionMiddleware";
+import { CallbackRepoProto } from "../bot/callbacks/callbackRepoProto";
 
 import { File } from "./asyncFiles";
 import { 
@@ -13,6 +17,17 @@ import {
   SmartappManifestWebParams, 
   SmartappManifestUnreadCounterParams 
 } from "@client/api/smartapps/smartappManifest";
+
+// Конструктор Bot
+export interface BotConstructorOptions {
+  collectors: HandlerCollector[];
+  botAccounts: BotAccountWithSecret[];
+  middlewares?: Middleware[];
+  httpClient?: HttpClient;
+  exceptionHandlers?: ExceptionHandlersDict;
+  defaultCallbackTimeout?: number;
+  callbackRepo?: CallbackRepoProto;
+}
 
 // Боты
 export interface GetBotsListOptions {

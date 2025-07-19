@@ -12,6 +12,7 @@ import { BotAPIReply } from "./reply";
 import { Sticker } from "../stickers";
 import { IsString, IsBoolean, IsOptional, IsEnum, ValidateNested, IsUUID } from "class-validator";
 import { Type } from "class-transformer";
+import { logger } from "@logger";
 
 // Контекст входящего сообщения (объединяет user, chat, device)
 export interface BotAPIIncomingMessageContext extends BotAPIUserContextModel, BotAPIChatContextModel, BotAPIDeviceContextModel {}
@@ -417,7 +418,7 @@ export class BotAPIIncomingMessage extends BotAPIBaseCommandModel {
                 sticker = domainAttachment;
             }
         } else {
-            console.warn("Received unknown attachment type");
+            logger.warn("Received unknown attachment type");
         }
     }
 
@@ -438,7 +439,7 @@ export class BotAPIIncomingMessage extends BotAPIBaseCommandModel {
                 reply = domainEntity;
             }
         } else {
-            console.warn("Received unknown entity type");
+            logger.warn("Received unknown entity type");
         }
     }
     

@@ -17,6 +17,7 @@ import {
   MessageStatus
 } from "@models";
 import {
+  BotConstructorOptions,
   GetBotsListOptions,
   SendMessageOptions,
   SendMessageWithParamsOptions,
@@ -175,11 +176,11 @@ import { Undefined } from '@missing';
 import { BOTX_DEFAULT_TIMEOUT } from '@constants';
 import { botIdVar, chatIdVar } from './contextVars';
 import { AnswerDestinationLookupError } from './exceptions';;
-import { defaultLogger, ILogger } from '@logger';
+import { defaultLogger } from '@logger';
 import { BotAccountsStorage } from './botAccountsStorage';
 import { CallbackManager } from './callbacks/callbackManager';
 import { CallbackMemoryRepo } from './callbacks/callbackMemoryRepo';
-import { CallbackRepoProto } from './callbacks/callbackRepoProto';
+
 import { RequestHeadersNotProvidedError, UnverifiedRequestError } from './exceptions';
 import { Middleware } from './handler';
 import { HandlerCollector } from './handlerCollector';
@@ -203,17 +204,7 @@ export class Bot {
     exceptionHandlers = new Map(),
     defaultCallbackTimeout = BOTX_DEFAULT_TIMEOUT,
     callbackRepo,
-
-  }: {
-    collectors: HandlerCollector[],
-    botAccounts: BotAccountWithSecret[],
-    middlewares?: Middleware[],
-    httpClient?: HttpClient,
-    exceptionHandlers?: ExceptionHandlersDict,
-    defaultCallbackTimeout?: number,
-    callbackRepo?: CallbackRepoProto,
-    logger?: ILogger,
-  }) {
+  }: BotConstructorOptions) {
     this._botAccountsStorage = new BotAccountsStorage(botAccounts);
     const repo = callbackRepo ?? new CallbackMemoryRepo();
     this._callbacksManager = new CallbackManager(repo);

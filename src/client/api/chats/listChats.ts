@@ -1,6 +1,7 @@
 import { AuthorizedBotXMethod, HttpClient } from "@client";
 import { BotAccountsStorage } from "@bot";
 import { APIChatTypes, ChatListItem, VerifiedPayloadBaseModel, convertChatTypeToDomain } from "@models";
+import { logger } from "@logger";
 
 export class BotXAPIListChatResult extends VerifiedPayloadBaseModel {
   group_chat_id!: string;
@@ -44,7 +45,7 @@ export class BotXAPIListChatResponsePayload extends VerifiedPayloadBaseModel {
 
     // Логирование как в Python оригинале
     if (chatsList.length !== this.result.length) {
-      console.warn("One or more unsupported chat types skipped");
+      logger.warn("One or more unsupported chat types skipped");
     }
 
     return chatsList;

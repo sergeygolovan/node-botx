@@ -3,7 +3,7 @@ import { CallbackManager } from "@bot";
 import type { BotAPIMethodFailedCallback, BotXMethodCallback } from "@models";
 import { HttpClient, HttpResponse } from "./httpClient";
 import { ClientErrorConstructor } from "./exceptions/base";
-import { logger } from "@logger";
+import { logger, pformatJsonableObj, trimFileDataInOutgoingJson } from "@logger";
 
 // Типы для обработчиков ошибок
 export type StatusHandler = (response: HttpResponse) => Promise<never>;
@@ -39,8 +39,7 @@ export class BotXMethod {
     try {
       const rawModel = await response.json();
       
-      // TODO: Добавить логирование
-      logger.debug("Got response from botx:", rawModel);
+      logger.debug("Got response from botx: {json}", { json: pformatJsonableObj(rawModel) });
       
       // Если у модели есть Zod схема, используем её для валидации
       if ((modelCls as any).schema) {
@@ -122,15 +121,19 @@ export class BotXMethod {
     const queryParams = args.find(arg => typeof arg === 'object' && arg.params)?.params;
     const jsonBody = args.find(arg => typeof arg === 'object' && arg.json)?.json;
 
-    let logTemplate = `Performing request to BotX:\n${method} ${url}`;
+    let logTemplate = "Performing request to BotX:\n{method} {url}";
+    const logData: any = { method, url };
+    
     if (queryParams) {
-      logTemplate += `\nquery: ${JSON.stringify(queryParams)}`;
+      logTemplate += "\nquery: {params}";
+      logData.params = pformatJsonableObj(queryParams);
     }
     if (jsonBody !== undefined) {
-      logTemplate += `\nbody: ${JSON.stringify(jsonBody)}`;
+      logTemplate += "\njson: {json}";
+      logData.json = pformatJsonableObj(trimFileDataInOutgoingJson(jsonBody));
     }
 
-    console.debug(logTemplate);
+    logger.debug(logTemplate, logData);
   }
 }
 
