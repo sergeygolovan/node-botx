@@ -1,0 +1,55 @@
+# Source files
+src/
+tsconfig.json
+
+# Development files
+.git/
+.github/
+.vscode/
+.idea/
+
+# Test files
+test/
+tests/
+__tests__/
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+jest.config.js
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Development dependencies
+node_modules/
+pnpm-lock.yaml
+yarn.lock
+package-lock.json
+
+# Build tools
+.eslintrc*
+.prettierrc*
+.babelrc*
+
+# Python files
+pybotx/
+*.py
+__pycache__/
+
+# Temporary files
+.tmp/
+.temp/
+*.tmp
+*.temp
+
+# IDE files
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db 

@@ -1,12 +1,40 @@
 {
   "name": "node-botx",
   "version": "0.1.0",
+  "description": "TypeScript библиотека для работы с BotX API - платформой для создания чат-ботов",
   "main": "build/index.js",
   "types": "build/index.d.ts",
+  "files": [
+    "build/**/*",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "ts-node src/index.ts",
-    "test": "jest"
+    "test": "jest",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "botx",
+    "bot",
+    "chatbot",
+    "typescript",
+    "api",
+    "messaging"
+  ],
+  "author": "Sergey Golovan <gogia0@yandex.ru>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sergeygolovan/node-botx.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sergeygolovan/node-botx/issues"
+  },
+  "homepage": "https://github.com/sergeygolovan/node-botx#readme",
+  "engines": {
+    "node": ">=16.0.0"
   },
   "dependencies": {
     "axios": "^1.6.0",

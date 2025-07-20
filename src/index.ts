@@ -7,6 +7,9 @@ export * from "@client";
 // Models
 export * from "@models";
 
+// SmartApp RPC
+export * from "./smartapp";
+
 // Utilities
 export { logger } from "@logger";
 export * from "@constants";

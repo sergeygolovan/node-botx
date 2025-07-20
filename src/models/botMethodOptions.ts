@@ -290,7 +290,7 @@ export interface SendSmartappNotificationOptions {
   botId: string;
   chatId: string;
   smartappCounter: number;
-  body?: string;
+  body: Missing<string>;
   opts: Missing<Record<string, unknown>>;
   meta: Missing<Record<string, unknown>>;
 }
