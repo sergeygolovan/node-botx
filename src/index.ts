@@ -8,7 +8,7 @@ export * from "@client";
 export * from "@models";
 
 // SmartApp RPC
-export * from "./smartapp";
+export * from "@smartapp";
 
 // Utilities
 export { logger } from "@logger";
