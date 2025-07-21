@@ -22,27 +22,25 @@ export class AuthorizedBotXMethod extends BotXMethod {
 
   protected async botxMethodCall(method: string, url: string, config?: any): Promise<HttpResponse> {
     const headers = config?.headers || {};
-    await this.addAuthorizationHeaders(headers);
+    await this.addAuthorizationHeaders();
 
     return super.botxMethodCall(method, url, config);
   }
 
   // Метод для потоковых запросов (как в Python оригинале)
   protected async botxMethodStream(method: string, url: string, config?: any): Promise<HttpResponse<ReadableStream<Uint8Array>>> {
-    const headers = config?.headers || {};
-    await this.addAuthorizationHeaders(headers);
+    await this.addAuthorizationHeaders();
 
     if (method === 'GET') {
       return this.httpClient.getStream(url, {
         ...config,
-        headers
       });
     }
     
     throw new Error(`Stream requests are only supported for GET method, got: ${method}`);
   }
 
-  private async addAuthorizationHeaders(headers: Record<string, any>): Promise<void> {
+  private async addAuthorizationHeaders(): Promise<void> {
     let token = this.botAccountsStorage.getTokenOrNone(this.senderBotId);
     
     if (!token) {
@@ -50,8 +48,7 @@ export class AuthorizedBotXMethod extends BotXMethod {
       token = await this.getToken(this.senderBotId);
       this.botAccountsStorage.setToken(this.senderBotId, token);
     }
-
-    headers.Authorization = `Bearer ${token}`;
+    this.httpClient.addAuthorizationHeaders(token);
   }
 
   private async getToken(botId: string): Promise<string> {

@@ -9,6 +9,7 @@ export interface HttpClient {
   put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<HttpResponse<T>>;
   delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<HttpResponse<T>>;
   patch<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<HttpResponse<T>>;
+  addAuthorizationHeaders(token: string): void;
 }
 
 // Интерфейс HTTP ответа
@@ -133,6 +134,10 @@ export class AxiosHttpClient implements HttpClient {
         throw new Error('Response data is not an ArrayBuffer');
       }
     };
+  }
+
+  addAuthorizationHeaders(token: string): void {
+    this.axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   }
 }
 
