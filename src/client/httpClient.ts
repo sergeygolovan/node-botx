@@ -1,3 +1,4 @@
+import { logger } from '@logger';
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 
 // Интерфейс HTTP клиента
@@ -20,13 +21,13 @@ export interface HttpResponse<T = any> {
   headers: Record<string, string>;
   config: any;
   request?: any;
-  
+
   // Методы для совместимости с fetch API
   ok: boolean;
   json(): Promise<any>;
   text(): Promise<string>;
   arrayBuffer(): Promise<ArrayBuffer>;
-  
+
   // Поддержка потокового чтения (как в Python)
   body?: ReadableStream<Uint8Array>;
 }
@@ -55,7 +56,7 @@ export class AxiosHttpClient implements HttpClient {
       ...config,
       responseType: 'stream'
     });
-    
+
     return {
       data: response.data,
       status: response.status,
@@ -64,7 +65,7 @@ export class AxiosHttpClient implements HttpClient {
       config: response.config,
       request: response.request,
       ok: response.status >= 200 && response.status < 300,
-      
+
       // Методы для совместимости с fetch API
       json: async () => {
         throw new Error('Cannot call json() on stream response');
@@ -75,7 +76,7 @@ export class AxiosHttpClient implements HttpClient {
       arrayBuffer: async () => {
         throw new Error('Cannot call arrayBuffer() on stream response');
       },
-      
+
       // Потоковое чтение
       body: response.data as ReadableStream<Uint8Array>
     };
@@ -110,7 +111,7 @@ export class AxiosHttpClient implements HttpClient {
       config: response.config,
       request: response.request,
       ok: response.status >= 200 && response.status < 300,
-      
+
       // Методы для совместимости с fetch API
       json: async () => {
         if (typeof response.data === 'string') {

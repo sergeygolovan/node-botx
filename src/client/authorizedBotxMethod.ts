@@ -4,6 +4,7 @@ import { CallbackManager } from "@bot";
 import { getToken } from "./getToken";
 import { HttpClient, HttpResponse } from "./httpClient";
 import { InvalidBotAccountError } from "./exceptions/common";
+import type { AxiosRequestConfig } from "axios";
 
 export class AuthorizedBotXMethod extends BotXMethod {
   statusHandlers: StatusHandlers = {
@@ -20,7 +21,7 @@ export class AuthorizedBotXMethod extends BotXMethod {
     super(senderBotId, httpClient, botAccountsStorage, callbacksManager);
   }
 
-  protected async botxMethodCall(method: string, url: string, config?: any): Promise<HttpResponse> {
+  protected async botxMethodCall(method: string, url: string, config?: Partial<AxiosRequestConfig>): Promise<HttpResponse> {
     const headers = config?.headers || {};
     await this.addAuthorizationHeaders();
 
@@ -28,7 +29,7 @@ export class AuthorizedBotXMethod extends BotXMethod {
   }
 
   // Метод для потоковых запросов (как в Python оригинале)
-  protected async botxMethodStream(method: string, url: string, config?: any): Promise<HttpResponse<ReadableStream<Uint8Array>>> {
+  protected async botxMethodStream(method: string, url: string, config?: Partial<AxiosRequestConfig>): Promise<HttpResponse<ReadableStream<Uint8Array>>> {
     await this.addAuthorizationHeaders();
 
     if (method === 'GET') {

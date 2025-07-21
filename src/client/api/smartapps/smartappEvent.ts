@@ -68,7 +68,10 @@ export class SmartAppEventMethod extends AuthorizedBotXMethod {
     const response = await this.botxMethodCall(
       "POST",
       this.buildUrl(path),
-      { json }
+      {
+        headers: { "Content-Type": "application/json" },
+        data: json
+      }
     );
 
     this.verifyAndExtractApiModel(

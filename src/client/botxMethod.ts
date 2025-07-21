@@ -4,6 +4,7 @@ import type { BotAPIMethodFailedCallback, BotXMethodCallback } from "@models";
 import { HttpClient, HttpResponse } from "./httpClient";
 import { ClientErrorConstructor } from "./exceptions/base";
 import { logger, pformatJsonableObj, trimFileDataInOutgoingJson } from "@logger";
+import type { AxiosRequestConfig } from "axios";
 
 // Типы для обработчиков ошибок
 export type StatusHandler = (response: HttpResponse) => Promise<never>;
@@ -55,7 +56,7 @@ export class BotXMethod {
     }
   }
 
-  protected async botxMethodCall(method: string, url: string, config?: any): Promise<HttpResponse> {
+  protected async botxMethodCall(method: string, url: string, config?: Partial<AxiosRequestConfig>): Promise<HttpResponse> {
     this.logOutgoingRequest(method, url, config);
 
     const requestConfig = {
@@ -116,10 +117,9 @@ export class BotXMethod {
     return callback;
   }
 
-  private logOutgoingRequest(...args: any[]): void {
-    const [method, url] = args;
-    const queryParams = args.find(arg => typeof arg === 'object' && arg.params)?.params;
-    const jsonBody = args.find(arg => typeof arg === 'object' && arg.json)?.json;
+  private logOutgoingRequest(method: string, url: string, config?: Partial<AxiosRequestConfig>): void {
+    const queryParams = config?.params;
+    const jsonBody = config?.data;
 
     let logTemplate = `Performing request to BotX:\n${method} ${url}`;
     

@@ -1,9 +1,9 @@
-import { AuthorizedBotXMethod, HttpClient, responseExceptionThrower } from "@client";
-import { AsyncBufferReadable, SpooledAsyncBuffer, CHUNK_SIZE } from "@asyncBuffer";
+import { AsyncBufferReadable, CHUNK_SIZE, SpooledAsyncBuffer } from "@asyncBuffer";
 import { BotAccountsStorage } from "@bot";
-import { File as DomainFile, Image, Video, Document, Voice, UnverifiedPayloadBaseModel, VerifiedPayloadBaseModel, APIAsyncFile } from "@models";
-import { Missing } from "@missing";
+import { AuthorizedBotXMethod, HttpClient, responseExceptionThrower } from "@client";
 import { ChatNotFoundError } from "@client/exceptions/common";
+import { Missing } from "@missing";
+import { APIAsyncFile, Document, File as DomainFile, Image, UnverifiedPayloadBaseModel, VerifiedPayloadBaseModel, Video, Voice } from "@models";
 
 export class BotXAPIUploadFileMeta extends UnverifiedPayloadBaseModel {
   duration!: Missing<number>;
@@ -12,7 +12,7 @@ export class BotXAPIUploadFileMeta extends UnverifiedPayloadBaseModel {
 
 export class BotXAPIUploadFileRequestPayload extends UnverifiedPayloadBaseModel {
   group_chat_id!: string; // Должно быть snake_case для API
-  meta!: string;
+  meta!: BotXAPIUploadFileMeta;
 
   static fromDomain(
     chatId: string,
