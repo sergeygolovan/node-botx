@@ -39,7 +39,7 @@ export class BotXMethod {
     try {
       const rawModel = await response.json();
       
-      logger.debug("Got response from botx: {json}", { json: pformatJsonableObj(rawModel) });
+      logger.debug(`Got response from botx: ${pformatJsonableObj(rawModel)}`);
       
       // Если у модели есть Zod схема, используем её для валидации
       if ((modelCls as any).schema) {
@@ -121,19 +121,16 @@ export class BotXMethod {
     const queryParams = args.find(arg => typeof arg === 'object' && arg.params)?.params;
     const jsonBody = args.find(arg => typeof arg === 'object' && arg.json)?.json;
 
-    let logTemplate = "Performing request to BotX:\n{method} {url}";
-    const logData: any = { method, url };
+    let logTemplate = `Performing request to BotX:\n${method} ${url}`;
     
     if (queryParams) {
-      logTemplate += "\nquery: {params}";
-      logData.params = pformatJsonableObj(queryParams);
+      logTemplate += `\nquery: ${pformatJsonableObj(queryParams)}`;
     }
     if (jsonBody !== undefined) {
-      logTemplate += "\njson: {json}";
-      logData.json = pformatJsonableObj(trimFileDataInOutgoingJson(jsonBody));
+      logTemplate += `\njson: ${pformatJsonableObj(trimFileDataInOutgoingJson(jsonBody))}`;
     }
 
-    logger.debug(logTemplate, logData);
+    logger.debug(logTemplate);
   }
 }
 
