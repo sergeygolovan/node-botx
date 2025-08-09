@@ -1,10 +1,10 @@
-import { AuthorizedBotXMethod, HttpClient } from "@client";
 import { BotAccountsStorage } from "@bot";
-import { UnverifiedPayloadBaseModel, VerifiedPayloadBaseModel } from "@models";
+import { AuthorizedBotXMethod, HttpClient } from "@client";
 import { Missing, Undefined } from "@missing";
-import { findAndReplaceEmbedMentions } from "@models/message/mentions";
-import { apiMarkupFromDomain } from "@models/message/markup";
+import { UnverifiedPayloadBaseModel, VerifiedPayloadBaseModel } from "@models";
 import { BotXAPIAttachment } from "@models/attachments";
+import { apiMarkupFromDomain } from "@models/message/markup";
+import { findAndReplaceEmbedMentions } from "@models/message/mentions";
 
 export class BotXAPIEditEventPayloadOpts extends UnverifiedPayloadBaseModel {
   buttons_auto_adjust!: Missing<boolean>;
@@ -99,7 +99,7 @@ export class EditEventMethod extends AuthorizedBotXMethod {
     const response = await this.botxMethodCall(
       "POST",
       this.buildUrl(path),
-      { json: payload.jsonableDict() }
+      { data: payload.jsonableDict() }
     );
 
     this.verifyAndExtractApiModel(BotXAPIEditEventResponsePayload, response);

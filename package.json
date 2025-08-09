@@ -1,6 +1,6 @@
 {
   "name": "node-botx",
-  "version": "0.2.7",
+  "version": "0.2.9",
   "description": "TypeScript библиотека для работы с BotX API - платформой для создания чат-ботов",
   "main": "build/index.js",
   "types": "build/index.d.ts",

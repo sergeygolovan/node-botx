@@ -1,7 +1,7 @@
-import { AuthorizedBotXMethod, HttpClient, responseExceptionThrower } from "@client";
 import { BotAccountsStorage } from "@bot";
-import { UnverifiedPayloadBaseModel, VerifiedPayloadBaseModel } from "@models";
+import { AuthorizedBotXMethod, HttpClient, responseExceptionThrower } from "@client";
 import { MessageNotFoundError } from "@client/exceptions/message";
+import { UnverifiedPayloadBaseModel, VerifiedPayloadBaseModel } from "@models";
 
 export class BotXAPIDeleteEventRequestPayload extends UnverifiedPayloadBaseModel {
   sync_id!: string;
@@ -37,7 +37,7 @@ export class DeleteEventMethod extends AuthorizedBotXMethod {
     const response = await this.botxMethodCall(
       "POST",
       this.buildUrl(path),
-      { json: payload.jsonableDict() }
+      { data: payload.jsonableDict() }
     );
 
     return this.verifyAndExtractApiModel(BotXAPIDeleteEventResponsePayload, response);

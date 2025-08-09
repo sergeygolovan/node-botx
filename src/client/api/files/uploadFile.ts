@@ -24,7 +24,7 @@ export class BotXAPIUploadFileRequestPayload extends UnverifiedPayloadBaseModel 
       meta: new BotXAPIUploadFileMeta({
         duration,
         caption,
-      }).toJSON(),
+      }),
     });
   }
 }
@@ -173,7 +173,7 @@ export class UploadFileMethod extends AuthorizedBotXMethod {
       const response = await this.botxMethodCall(
         "POST",
         this.buildUrl(path),
-        { body: formData }
+        { data: formData }
       );
 
       const responseData = await response.json();

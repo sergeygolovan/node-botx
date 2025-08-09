@@ -15,7 +15,7 @@ export type ResultType =
   | (new (...args: any[]) => any)  // Класс/конструктор (аналог BaseModel)
   | JsonableResultType;             // Примитивы и контейнеры
 
-export class RPCResultResponse<T = any> {
+export class RPCResultResponse<T extends ResultType = ResultType> {
   result: T;
 
   @IsOptional()
@@ -45,7 +45,7 @@ export class RPCResultResponse<T = any> {
   jsonableResult(): JsonableResultType {
     // Если результат - это класс с методом toJSON или plain object
     if (typeof this.result === 'object' && this.result !== null) {
-      return this.result as JsonableResultType;
+      return JSON.parse(JSON.stringify(this.result)) as JsonableResultType;
     }
     return this.result as JsonableResultType;
   }

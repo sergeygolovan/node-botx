@@ -23,7 +23,9 @@ function removeUndefined(originObj: unknown): unknown {
     return newList;
   } else if (isPlainObject(originObj)) {
     const newDict: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(originObj as Record<string, unknown>)) {
+    for (const [key, value] of Object.entries(
+      originObj as Record<string, unknown>
+    )) {
       if (value === Undefined) continue;
       if (Array.isArray(value) || isPlainObject(value)) {
         const newValue = removeUndefined(value);
@@ -59,11 +61,6 @@ export abstract class PayloadBaseModel {
   jsonableDict(): Record<string, unknown> {
     return JSON.parse(this.json());
   }
-
-  // Для обратной совместимости
-  toJSON(): string {
-    return this.json();
-  }
 }
 
 export class VerifiedPayloadBaseModel extends PayloadBaseModel {
@@ -77,7 +74,15 @@ export class VerifiedPayloadBaseModel extends PayloadBaseModel {
     const result: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(this)) {
       // Исключаем служебные поля
-      if (key !== 'constructor' && typeof value !== 'function' && !key.startsWith('_')) {
+      if (
+        key !== "constructor" &&
+        typeof value !== "function" &&
+        !key.startsWith("_")
+      ) {
+        if (value instanceof PayloadBaseModel) {
+          result[key] = value.toObject();
+        }
+
         result[key] = value;
       }
     }
@@ -99,7 +104,14 @@ export class UnverifiedPayloadBaseModel extends PayloadBaseModel {
     const result: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(this)) {
       // Исключаем служебные поля
-      if (key !== 'constructor' && typeof value !== 'function' && !key.startsWith('_')) {
+      if (
+        key !== "constructor" &&
+        typeof value !== "function" &&
+        !key.startsWith("_")
+      ) {
+        if (value instanceof PayloadBaseModel) {
+          result[key] = value.toObject();
+        }
         result[key] = value;
       }
     }

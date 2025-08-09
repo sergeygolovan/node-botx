@@ -120,9 +120,12 @@ export class BotXMethod {
   private logOutgoingRequest(method: string, url: string, config?: Partial<AxiosRequestConfig>): void {
     const queryParams = config?.params;
     const jsonBody = config?.data;
+    const headers = config?.headers;
 
     let logTemplate = `Performing request to BotX:\n${method} ${url}`;
-    
+    if (headers !== undefined) {
+      logTemplate += `\nheaders: ${pformatJsonableObj(headers)}`;
+    }
     if (queryParams) {
       logTemplate += `\nquery: ${pformatJsonableObj(queryParams)}`;
     }

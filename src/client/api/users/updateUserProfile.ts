@@ -73,7 +73,10 @@ export class UpdateUsersProfileMethod extends AuthorizedBotXMethod {
     const response = await this.botxMethodCall(
       "PUT",
       this.buildUrl(path),
-      { json: payload.jsonableDict() }
+      {
+        headers: { "Content-Type": "application/json" },
+        data: payload.jsonableDict()
+      }
     );
 
     return this.verifyAndExtractApiModel(BotXAPIUpdateUserProfileResponsePayload, response);

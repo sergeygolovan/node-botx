@@ -80,7 +80,7 @@ export class SmartAppUploadFileMethod extends AuthorizedBotXMethod {
       const response = await this.botxMethodCall(
         "POST",
         this.buildUrl(path),
-        { body: formData }
+        { data: formData }
       );
 
       return this.verifyAndExtractApiModel(

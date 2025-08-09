@@ -1,7 +1,7 @@
-import { AuthorizedBotXMethod, HttpClient, responseExceptionThrower } from "@client";
 import { BotAccountsStorage } from "@bot";
+import { AuthorizedBotXMethod, HttpClient, responseExceptionThrower } from "@client";
+import { ChatNotFoundError, PermissionDeniedError } from "@client/exceptions";
 import { UnverifiedPayloadBaseModel, VerifiedPayloadBaseModel } from "@models";
-import { PermissionDeniedError, ChatNotFoundError } from "@client/exceptions";
 
 export class BotXAPIUnpinMessageRequestPayload extends UnverifiedPayloadBaseModel {
   chat_id!: string;
@@ -37,7 +37,7 @@ export class UnpinMessageMethod extends AuthorizedBotXMethod {
     const response = await this.botxMethodCall(
       "POST",
       this.buildUrl(path),
-      { json: payload.jsonableDict() }
+      { data: payload.jsonableDict() }
     );
 
     this.verifyAndExtractApiModel(

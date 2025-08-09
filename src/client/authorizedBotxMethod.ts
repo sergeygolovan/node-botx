@@ -45,7 +45,6 @@ export class AuthorizedBotXMethod extends BotXMethod {
     let token = this.botAccountsStorage.getTokenOrNone(this.senderBotId);
     
     if (!token) {
-      // TODO: Реализовать getToken
       token = await this.getToken(this.senderBotId);
       this.botAccountsStorage.setToken(this.senderBotId, token);
     }

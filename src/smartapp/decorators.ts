@@ -1,8 +1,8 @@
 import "reflect-metadata";
+import { RPCError } from "./models/errors";
+import { ResultType } from "./models/responses";
 import { RPCRouter } from "./router";
 import { Handler, Middleware } from "./typing";
-import { ResultType } from "./models/responses";
-import { RPCError } from "./models/errors";
 
 // Метаданные ключи для Reflect
 const RPC_METHOD_METADATA_KEY = Symbol("rpc:method");

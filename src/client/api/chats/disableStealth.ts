@@ -37,7 +37,10 @@ export class DisableStealthMethod extends AuthorizedBotXMethod {
     const response = await this.botxMethodCall(
       "POST",
       this.buildUrl(path),
-      { json: payload.jsonableDict() }
+      {
+        headers: { "Content-Type": "application/json" },
+        data: payload.jsonableDict()
+      }
     );
 
     this.verifyAndExtractApiModel(
